@@ -18,7 +18,7 @@
 		"intermediate_mappings": "net.fabricmc:intermediary",
 		"entrypoints": {
 			"init": "io.github.moonlight_maya.limits_strawberries.StrawberryMod",
-			"client_init": "io.github.moonlight_maya.limits_strawberries.StrawberryModClient"
+			"client_init": "io.github.moonlight_maya.limits_strawberries.client.StrawberryModClient"
 		},
 		"depends": [
 			{
