@@ -2,6 +2,7 @@ package io.github.moonlight_maya.limits_strawberries.client;
 
 import com.mojang.blaze3d.platform.InputUtil;
 import io.github.moonlight_maya.limits_strawberries.StrawberryMod;
+import io.github.moonlight_maya.limits_strawberries.client.screens.MainJournalScreen;
 import io.github.moonlight_maya.limits_strawberries.data.BerryMap;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.fabricmc.fabric.api.client.rendering.v1.EntityModelLayerRegistry;

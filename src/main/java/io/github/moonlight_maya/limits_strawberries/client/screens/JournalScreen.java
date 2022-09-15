@@ -1,4 +1,4 @@
-package io.github.moonlight_maya.limits_strawberries.client;
+package io.github.moonlight_maya.limits_strawberries.client.screens;
 
 import com.mojang.blaze3d.systems.RenderSystem;
 import io.github.moonlight_maya.limits_strawberries.StrawberryMod;

@@ -1,4 +1,4 @@
-package io.github.moonlight_maya.limits_strawberries.client;
+package io.github.moonlight_maya.limits_strawberries.client.screens;
 
 import net.minecraft.client.gui.widget.TexturedButtonWidget;
 import net.minecraft.client.util.math.MatrixStack;
@@ -10,8 +10,8 @@ import java.util.List;
 
 public class MainJournalScreen extends JournalScreen {
 
-	private static final int BUTTON_WIDTH = 120;
-	private static final int BUTTON_HEIGHT = 90;
+	public static final int BUTTON_WIDTH = 120;
+	public static final int BUTTON_HEIGHT = 90;
 
 	private static final int HORIZ_PADDING = (SCREEN_WIDTH / 2 - BUTTON_WIDTH) / 2;
 	private static final int VERT_PADDING = (SCREEN_HEIGHT - 2 * BUTTON_HEIGHT) / 3;
@@ -34,7 +34,7 @@ public class MainJournalScreen extends JournalScreen {
 		//Constructor after studying:
 		//x, y, width, height, u, v, hoveredVOffset, texture, texWidth, texHeight, onClick
 		addDrawableChild(new TexturedButtonWidget(anchorX() + BUTTON_X, anchorY() + BUTTON1_Y, BUTTON_WIDTH, BUTTON_HEIGHT, BUTTON1_U, BUTTON1_V, BUTTON_HEIGHT, TEXTURE, TEX_WIDTH, TEX_HEIGHT, button -> {
-//			if (client != null) client.setScreen(new BerryJournalScreen());
+			if (client != null) client.setScreen(new BerryJournalScreen());
 		}));
 		addDrawableChild(new TexturedButtonWidget(anchorX() + BUTTON_X, anchorY() + BUTTON2_Y, BUTTON_WIDTH, BUTTON_HEIGHT, BUTTON2_U, BUTTON2_V, BUTTON_HEIGHT, TEXTURE, TEX_WIDTH, TEX_HEIGHT, button -> {
 //			if (client != null) client.setScreen(new PlayerJournalScreen());

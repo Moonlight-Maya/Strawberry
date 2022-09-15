@@ -23,8 +23,8 @@ public class BerryMap {
 		}
 	}
 
-	protected final Map<UUID, Berry> berryInfo = new HashMap<>();
-	protected final Map<UUID, Set<UUID>> collectorInfo = new HashMap<>(); //Map of player UUIDs to which berries they collected
+	public final Map<UUID, Berry> berryInfo = new HashMap<>();
+	public final Map<UUID, Set<UUID>> collectorInfo = new HashMap<>(); //Map of player UUIDs to which berries they collected
 
 	//Returns true if the added berry was new, and false if it was already in the map.
 	public boolean addBerryIfNeeded(UUID berryUUID) {
@@ -82,7 +82,7 @@ public class BerryMap {
 		return result;
 	}
 
-	protected static class Berry {
+	public static class Berry {
 		public String name = "", clue = "";
 		public final Set<UUID> collectors = new HashSet<>();
 	}
