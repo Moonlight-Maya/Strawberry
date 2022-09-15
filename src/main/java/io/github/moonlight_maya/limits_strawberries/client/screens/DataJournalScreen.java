@@ -31,12 +31,25 @@ public abstract class DataJournalScreen<T extends DataJournalScreen.Entry> exten
 	private final T[] entries;
 	private int currentPage = 0;
 	private int numPages;
-	private int hoveredEntry = -1;
+	private List<OrderedText> tooltip;
 	private TexturedButtonWidget leftButton, rightButton;
+	protected boolean mouseDown;
 	protected DataJournalScreen(Text text) {
 		super(text);
 		entries = createEntries();
 		numPages = (int) Math.ceil(entries.length * 1d / ENTRIES_PER_PAGE) + 1;
+	}
+
+	@Override
+	public boolean mouseClicked(double mouseX, double mouseY, int button) {
+		mouseDown = true;
+		return super.mouseClicked(mouseX, mouseY, button);
+	}
+
+	@Override
+	public boolean mouseReleased(double mouseX, double mouseY, int button) {
+		mouseDown = false;
+		return super.mouseReleased(mouseX, mouseY, button);
 	}
 
 	@Override
@@ -64,34 +77,19 @@ public abstract class DataJournalScreen<T extends DataJournalScreen.Entry> exten
 	public void render(MatrixStack matrices, int mouseX, int mouseY, float delta) {
 		renderJournalBackground(matrices);
 
-		hoveredEntry = -1;
-		if (mouseY > anchorY() + HEADER_SPACE && mouseY < anchorY() + HEADER_SPACE + ENTRY_HEIGHT * ENTRIES_PER_PAGE) {
-			//In correct Y range...
-			int entryIndexOnPage = (mouseY - anchorY() - HEADER_SPACE) / ENTRY_HEIGHT;
-			if (currentPage > 0 && mouseX > anchorX() + LEFT_MARGIN && mouseX < anchorX() + SCREEN_WIDTH / 2 - RIGHT_MARGIN) {
-				//We may be hovering an entry on the left page.
-				hoveredEntry = (currentPage - 1) * ENTRIES_PER_PAGE + entryIndexOnPage;
-			} else if (mouseX > anchorX() + SCREEN_WIDTH / 2 + LEFT_MARGIN && mouseX < anchorX() + SCREEN_WIDTH - RIGHT_MARGIN) {
-				//We may be hovering an entry on the right page.
-				hoveredEntry = currentPage * ENTRIES_PER_PAGE + entryIndexOnPage;
-			}
-		}
+		//Render and assign tooltip
+		tooltip = null;
+		renderPage(matrices, mouseX, mouseY, currentPage);
+		renderPage(matrices, mouseX, mouseY, currentPage + 1);
 
-		renderPage(matrices, currentPage);
-		renderPage(matrices, currentPage + 1);
-
-		if (hoveredEntry > -1 && hoveredEntry < entries.length) {
-			//Render hover text
-			List<OrderedText> hoverText = entries[hoveredEntry].getHoverText();
-
-			renderOrderedTooltip(matrices, hoverText, mouseX, mouseY);
-			hoveredEntry = -1;
-		}
+		//Render tooltip
+		if (tooltip != null)
+			renderOrderedTooltip(matrices, tooltip, mouseX, mouseY);
 
 		super.render(matrices, mouseX, mouseY, delta);
 	}
 
-	private void renderPage(MatrixStack matrices, int index) {
+	private void renderPage(MatrixStack matrices, int mouseX, int mouseY, int index) {
 		if (index == 0) {
 			return;
 		}
@@ -103,13 +101,14 @@ public abstract class DataJournalScreen<T extends DataJournalScreen.Entry> exten
 
 		int firstEntry = (index-1) * ENTRIES_PER_PAGE;
 		for (int i = firstEntry; i < firstEntry + ENTRIES_PER_PAGE && i < entries.length; i++) {
-			entries[i].render(matrices, x, y, getZOffset(), i == hoveredEntry);
+			List<OrderedText> tooltipResult = entries[i].render(matrices, x, y, getZOffset(), mouseX, mouseY, mouseDown);
+			if (tooltipResult != null)
+				tooltip = tooltipResult;
 			y += ENTRY_HEIGHT;
 		}
 	}
 
 	protected interface Entry {
-		List<OrderedText> getHoverText();
-		void render(MatrixStack matrices, int x, int y, int z, boolean hovered);
+		List<OrderedText> render(MatrixStack matrices, int x, int y, int z, int mouseX, int mouseY, boolean mouseDown);
 	}
 }

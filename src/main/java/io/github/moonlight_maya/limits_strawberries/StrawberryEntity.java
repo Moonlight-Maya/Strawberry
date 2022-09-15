@@ -11,20 +11,26 @@ import net.minecraft.world.World;
 
 public class StrawberryEntity extends Entity {
 
+	private boolean ticked;
+
 	public StrawberryEntity(EntityType<? extends Entity> entityType, World world) {
 		super(entityType, world);
-		if (!world.isClient)
-			StrawberryMod.SERVER_BERRIES.addBerryIfNeeded(getUuid());
 	}
 
 	@Override
 	public void tick() {
 		super.tick();
-		if (!world.isClient)
+		if (!world.isClient) {
+			if (!ticked) {
+				//Only attempt to add berry on first tick server side
+				StrawberryMod.SERVER_BERRIES.addBerryIfNeeded(getUuid());
+				ticked = true;
+			}
 			world.getOtherEntities(this, getBoundingBox(), e -> e instanceof ServerPlayerEntity).stream().map(e -> (ServerPlayerEntity) e).forEach(p -> {
 				boolean newBerry = StrawberryMod.SERVER_BERRIES.collect(getUuid(), p.getUuid());
 				if (newBerry) p.sendMessage(Text.literal("Collected a berry!"), true);
 			});
+		}
 	}
 
 	@Override
