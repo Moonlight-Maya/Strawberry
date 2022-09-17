@@ -5,7 +5,6 @@ import net.minecraft.block.piston.PistonBehavior;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
-import net.minecraft.entity.damage.DamageSource;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.SwordItem;
 import net.minecraft.nbt.NbtCompound;
@@ -19,7 +18,6 @@ import net.minecraft.util.Hand;
 import net.minecraft.world.World;
 
 import javax.annotation.Nullable;
-import java.util.UUID;
 
 public class StrawberryEntity extends Entity {
 
@@ -50,7 +48,9 @@ public class StrawberryEntity extends Entity {
 			}
 			world.getOtherEntities(this, getBoundingBox(), e -> e instanceof ServerPlayerEntity).stream().map(e -> (ServerPlayerEntity) e).forEach(p -> {
 				boolean newBerry = StrawberryMod.SERVER_BERRIES.collect(getUuid(), p.getUuid());
-				if (newBerry) p.sendMessage(Text.translatable("limits_strawberries.entity.berry_collect_notif"), true);
+				if (newBerry) {
+					p.sendMessage(Text.translatable("limits_strawberries.entity.berry_collect_notif"), true);
+				}
 			});
 		}
 	}

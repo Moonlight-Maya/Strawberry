@@ -11,10 +11,7 @@ import net.minecraft.client.render.GameRenderer;
 import net.minecraft.client.resource.language.I18n;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.text.*;
-import net.minecraft.text.component.TranslatableComponent;
 import net.minecraft.util.Formatting;
-import net.minecraft.util.Language;
-import org.apache.commons.codec.language.bm.Lang;
 
 import java.util.ArrayList;
 import java.util.Comparator;

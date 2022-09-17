@@ -1,9 +1,12 @@
 package io.github.moonlight_maya.limits_strawberries.data;
 
+import com.google.common.collect.BiMap;
+import com.google.common.collect.HashBiMap;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.nbt.NbtElement;
+import net.minecraft.nbt.NbtHelper;
 import net.minecraft.nbt.NbtList;
-import net.minecraft.nbt.NbtString;
+import net.minecraft.text.Text;
 
 import javax.annotation.Nullable;
 import java.util.*;
@@ -14,6 +17,7 @@ public class BerryMap {
 	public static final int NAME_MAX = 30;
 	public static final int CLUE_MAX = 100;
 	public static final int DESC_MAX = 500;
+	public static final int PLACER_MAX = 30;
 
 	public void loadFrom(NbtCompound compound) {
 		berryInfo.clear();
@@ -29,12 +33,17 @@ public class BerryMap {
 					berryData.contains("desc") ? berryData.getString("desc") : null,
 					berryData.contains("placer") ? berryData.getString("placer") : null
 			);
-			berryData.getList("collectors", NbtElement.STRING_TYPE).stream().map(NbtElement::asString).map(UUID::fromString).forEach(p -> collect(berryUUID, p));
+			berryData.getList("collectors", NbtElement.INT_ARRAY_TYPE).stream().map(NbtHelper::toUuid).forEach(p -> collect(berryUUID, p));
 		}
+
+		NbtCompound virtual = compound.getCompound("virtual");
+		for (String key : virtual.getKeys())
+			virtualBerries.put(key, virtual.getUuid(key));
 	}
 
 	public final Map<UUID, Berry> berryInfo = new HashMap<>();
 	public final Map<UUID, Set<UUID>> collectorInfo = new HashMap<>(); //Map of player UUIDs to which berries they collected
+	public final BiMap<String, UUID> virtualBerries = HashBiMap.create(); //Map of string ids in chat, to virtual berry UUIDs, and back
 
 	//Returns true if the added berry was new, and false if it was already in the map.
 	public boolean addBerryIfNeeded(UUID berryUUID) {
@@ -50,6 +59,17 @@ public class BerryMap {
 	public void resetPlayer(UUID playerUUID) {
 		berryInfo.values().forEach(berry -> berry.collectors.remove(playerUUID));
 		collectorInfo.remove(playerUUID);
+	}
+
+	//Returns error feedback, this should be called only by commands
+	//Returns null on success.
+	public Text createVirtualBerry(String key) {
+		if (virtualBerries.containsKey(key))
+			return Text.translatable("limits_strawberies.command.berry_create_already_exists", key);
+		UUID berryUUID;
+		do berryUUID = UUID.randomUUID(); while (!addBerryIfNeeded(berryUUID));
+		virtualBerries.put(key, berryUUID);
+		return null;
 	}
 
 	//Bit flags.
@@ -110,11 +130,17 @@ public class BerryMap {
 			if (entry.getValue().placer != null)
 				berryData.putString("placer", entry.getValue().placer);
 			NbtList collectors = new NbtList();
-			entry.getValue().collectors.stream().map(UUID::toString).map(NbtString::of).forEach(collectors::add);
+			entry.getValue().collectors.stream().map(NbtHelper::fromUuid).forEach(collectors::add);
 			berryData.put("collectors", collectors);
 			data.put(entry.getKey().toString(), berryData);
 		}
 		result.put("data", data);
+
+		NbtCompound virtual = new NbtCompound();
+		for (Map.Entry<String, UUID> entry : virtualBerries.entrySet())
+			virtual.putUuid(entry.getKey(), entry.getValue());
+		result.put("virtual", virtual);
+
 		return result;
 	}
 

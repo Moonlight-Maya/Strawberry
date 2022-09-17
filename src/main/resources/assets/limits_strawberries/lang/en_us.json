@@ -33,9 +33,23 @@
 
   "entity.limits_strawberries.strawberry": "Strawberry",
   "item.limits_strawberries.strawberry": "Strawberry",
+  "limits_strawberries.item.edible": "Edible: Eat to earn this strawberry!",
+
+  "limits_strawberies.command.failure_invalid_key": "Failed to execute command. No berry with key %s.",
+  "limits_strawberies.command.failure_too_long": "String too long! Maximum length %d.",
 
   "limits_strawberries.command.reset_confirmation": "Are you sure you want to reset all berry progress? You will lose ALL of your collected berries. To confirm, type \"/berry reset confirm %d\". To cancel, run the command with a different number.",
   "limits_strawberries.command.reset_confirm_before_request": "Could not confirm. You need to request first with \"/berry reset\".",
   "limits_strawberries.command.reset_canceled": "Reset canceled successfully.",
-  "limits_strawberries.command.reset_confirmed": "Reset confirmed. Your berries have been reset."
+  "limits_strawberries.command.reset_confirmed": "Reset confirmed. Your berries have been reset.",
+
+  "limits_strawberies.command.berry_create_success": "Successfully created berry %s.",
+
+  "limits_strawberies.command.berry_delete_success": "Successfully deleted berry with key %s.",
+  "limits_strawberies.command.berry_delete_failure_not_exist": "Failed to delete berry because somehow it didn't exist??? This is a bug lol, try to report with a reproducible example.",
+
+  "limits_strawberies.command.berry_list_none": "There are no virtual berries.",
+  "limits_strawberies.command.berry_list_result": "%s.",
+
+  "limits_strawberies.command.berry_grant_success": "Successfully granted berry to %d players."
 }
