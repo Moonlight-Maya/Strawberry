@@ -8,6 +8,7 @@ import net.minecraft.text.Text;
 
 import java.util.List;
 
+@Deprecated
 public class MainJournalScreen extends JournalScreen {
 
 	public static final int BUTTON_WIDTH = 120;

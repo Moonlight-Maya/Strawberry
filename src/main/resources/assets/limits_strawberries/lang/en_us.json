@@ -1,0 +1,41 @@
+{
+  "limits_strawberries.gui.edit_berry_title": "Edit Berry",
+  "limits_strawberries.gui.name": "Name",
+  "limits_strawberries.gui.clue": "Clue",
+  "limits_strawberries.gui.desc": "Description",
+  "limits_strawberries.gui.edit_berry_placed_by": "Placed by %s",
+
+  "limits_strawberries.gui.berries": "Berries",
+  "limits_strawberries.gui.sort.name": "Name",
+  "limits_strawberries.gui.sort.uncollected": "Uncollected",
+  "limits_strawberries.gui.sort.most_collected": "Most Collected",
+  "limits_strawberries.gui.sort.reverse": "Reverse Sort",
+
+  "limits_strawberries.gui.unnamed_berry": "Unnamed Berry",
+  "limits_strawberries.gui.command": "Command",
+  "limits_strawberries.gui.no_clue": "This berry has no clue!",
+
+  "limits_strawberries.gui.page_zero_title": "My Strawberries",
+  "limits_strawberries.gui.page_zero_body": "A place for you to track your berry progress and search for new ones!",
+  "limits_strawberries.gui.page_zero_sort_options": "Sorting Options: ",
+  "limits_strawberries.gui.page_zero_stats": "Stats: ",
+  "limits_strawberries.gui.page_zero_rarest": "Rarest: ",
+  "limits_strawberries.gui.n_a": "N/A",
+  "limits_strawberries.gui.page_zero_leaderboard": "Leaderboard: ",
+  "limits_strawberries.gui.berry_entry_placed_by": "Placed by ",
+  "limits_strawberries.gui.berry_entry_collected_by": "Collected by ",
+  "limits_strawberries.gui.berry_entry_player_count_singular": "1 Player",
+  "limits_strawberries.gui.berry_entry_player_count_plural": "%d Players",
+  "limits_strawberries.gui.berry_entry_click_for_clue": "Click for clue",
+
+  "limits_strawberries.entity.berry_collect_notif": "Collected a berry!",
+  "limits_strawberries.entity.berry_interact_gamemode_fail": "Can only update berry in creative mode!",
+
+  "entity.limits_strawberries.strawberry": "Strawberry",
+  "item.limits_strawberries.strawberry": "Strawberry",
+
+  "limits_strawberries.command.reset_confirmation": "Are you sure you want to reset all berry progress? You will lose ALL of your collected berries. To confirm, type \"/berry reset confirm %d\". To cancel, run the command with a different number.",
+  "limits_strawberries.command.reset_confirm_before_request": "Could not confirm. You need to request first with \"/berry reset\".",
+  "limits_strawberries.command.reset_canceled": "Reset canceled successfully.",
+  "limits_strawberries.command.reset_confirmed": "Reset confirmed. Your berries have been reset."
+}

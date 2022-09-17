@@ -5,10 +5,16 @@ import net.minecraft.nbt.NbtElement;
 import net.minecraft.nbt.NbtList;
 import net.minecraft.nbt.NbtString;
 
+import javax.annotation.Nullable;
 import java.util.*;
 
 //Used on the client, extended for server, so it syncs.
 public class BerryMap {
+
+	public static final int NAME_MAX = 30;
+	public static final int CLUE_MAX = 100;
+	public static final int DESC_MAX = 500;
+
 	public void loadFrom(NbtCompound compound) {
 		berryInfo.clear();
 		collectorInfo.clear();
@@ -17,8 +23,12 @@ public class BerryMap {
 			UUID berryUUID = UUID.fromString(uuid);
 			NbtCompound berryData = data.getCompound(uuid);
 			addBerryIfNeeded(berryUUID);
-			updateName(berryUUID, berryData.getString("name"));
-			updateClue(berryUUID, berryData.getString("clue"));
+			updateBerry(berryUUID,
+					berryData.contains("name") ? berryData.getString("name") : null,
+					berryData.contains("clue") ? berryData.getString("clue") : null,
+					berryData.contains("desc") ? berryData.getString("desc") : null,
+					berryData.contains("placer") ? berryData.getString("placer") : null
+			);
 			berryData.getList("collectors", NbtElement.STRING_TYPE).stream().map(NbtElement::asString).map(UUID::fromString).forEach(p -> collect(berryUUID, p));
 		}
 	}
@@ -37,22 +47,42 @@ public class BerryMap {
 		return berryInfo.remove(berryUUID) != null;
 	}
 
-	//Returns true if the name is different from the old name, false otherwise.
-	public boolean updateName(UUID berryUUID, String name) {
-		addBerryIfNeeded(berryUUID);
-		Berry berry = berryInfo.get(berryUUID);
-		String oldName = berry.name;
-		berry.name = name;
-		return !name.equals(oldName);
+	public void resetPlayer(UUID playerUUID) {
+		berryInfo.values().forEach(berry -> berry.collectors.remove(playerUUID));
+		collectorInfo.remove(playerUUID);
 	}
 
-	//Returns true if the clue is different from the old clue, false otherwise.
-	public boolean updateClue(UUID berryUUID, String clue) {
+	//Bit flags.
+	//1 bit means name changed,
+	//2 bit means clue changed,
+	//4 bit means desc changed,
+	//8 bit means placer changed.
+	public byte updateBerry(UUID berryUUID, @Nullable String name, @Nullable String clue, @Nullable String desc, @Nullable String placer) {
 		addBerryIfNeeded(berryUUID);
 		Berry berry = berryInfo.get(berryUUID);
-		String oldClue = berry.clue;
-		berry.clue = clue;
-		return !clue.equals(oldClue);
+		byte result = 0;
+
+		if (name != null && !Objects.equals(berry.name, name)) {
+			result |= 1;
+			berry.name = name;
+		}
+
+		if (clue != null && !Objects.equals(berry.clue, clue)) {
+			result |= 2;
+			berry.clue = clue;
+		}
+
+		if (desc != null && !Objects.equals(berry.desc, desc)) {
+			result |= 4;
+			berry.desc = desc;
+		}
+
+		if (placer != null && !Objects.equals(berry.placer, placer)) {
+			result |= 8;
+			berry.placer = placer;
+		}
+
+		return result;
 	}
 
 	//Returns true if the berry wasn't already collected by that player, false otherwise.
@@ -71,8 +101,14 @@ public class BerryMap {
 		NbtCompound data = new NbtCompound();
 		for (Map.Entry<UUID, Berry> entry : berryInfo.entrySet()) {
 			NbtCompound berryData = new NbtCompound();
-			berryData.putString("name", entry.getValue().name);
-			berryData.putString("clue", entry.getValue().clue);
+			if (entry.getValue().name != null)
+				berryData.putString("name", entry.getValue().name);
+			if (entry.getValue().clue != null)
+				berryData.putString("clue", entry.getValue().clue);
+			if (entry.getValue().desc != null)
+				berryData.putString("desc", entry.getValue().desc);
+			if (entry.getValue().placer != null)
+				berryData.putString("placer", entry.getValue().placer);
 			NbtList collectors = new NbtList();
 			entry.getValue().collectors.stream().map(UUID::toString).map(NbtString::of).forEach(collectors::add);
 			berryData.put("collectors", collectors);
@@ -83,7 +119,7 @@ public class BerryMap {
 	}
 
 	public static class Berry {
-		public String name = "", clue = "";
+		public String name, clue, desc, placer;
 		public final Set<UUID> collectors = new HashSet<>();
 	}
 

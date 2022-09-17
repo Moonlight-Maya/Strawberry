@@ -1,20 +1,20 @@
 package io.github.moonlight_maya.limits_strawberries.client.screens;
 
 import com.mojang.blaze3d.systems.RenderSystem;
-import com.mojang.blaze3d.vertex.BufferBuilder;
-import com.mojang.blaze3d.vertex.Tessellator;
 import io.github.moonlight_maya.limits_strawberries.client.StrawberryModClient;
 import io.github.moonlight_maya.limits_strawberries.client.widget.SortButtonWidget;
 import io.github.moonlight_maya.limits_strawberries.client.widget.ToggleTexturedButtonWidget;
 import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.font.TextRenderer;
 import net.minecraft.client.gui.DrawableHelper;
-import net.minecraft.client.gui.widget.TexturedButtonWidget;
 import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.client.render.GameRenderer;
+import net.minecraft.client.resource.language.I18n;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.text.*;
+import net.minecraft.text.component.TranslatableComponent;
 import net.minecraft.util.Formatting;
+import net.minecraft.util.Language;
+import org.apache.commons.codec.language.bm.Lang;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -22,14 +22,14 @@ import java.util.List;
 
 public class BerryJournalScreen extends DataJournalScreen<BerryJournalScreen.BerryEntry> {
 
-	protected BerryJournalScreen() {
-		super(Text.literal("Berries"));
+	public BerryJournalScreen() {
+		super(Text.translatable("limits_strawberries.gui.berries"));
 	}
 
 	private static final ArrayList<SortButtonWidget.SortOption<BerryEntry>> SORT_OPTIONS = new ArrayList<>() {{
-		add(new SortButtonWidget.SortOption<>(Comparator.comparing(entry -> entry.name), Text.literal("Name")));
-		add(new SortButtonWidget.SortOption<>(Comparator.comparing(entry -> !entry.collected), Text.literal("You Collected")));
-		add(new SortButtonWidget.SortOption<>(Comparator.comparing(entry -> -entry.collectedBy), Text.literal("Most Collected")));
+		add(new SortButtonWidget.SortOption<>(Comparator.comparing(entry -> entry.name), Text.translatable("limits_strawberries.gui.sort.name")));
+		add(new SortButtonWidget.SortOption<>(Comparator.comparing(entry -> entry.collected), Text.translatable("limits_strawberries.gui.sort.uncollected")));
+		add(new SortButtonWidget.SortOption<>(Comparator.comparing(entry -> -entry.collectedBy), Text.translatable("limits_strawberries.gui.sort.most_collected")));
 	}};
 	private static final int BUTTON_WIDTH = 15;
 	private static final int BUTTON_HEIGHT = 15;
@@ -50,7 +50,7 @@ public class BerryJournalScreen extends DataJournalScreen<BerryJournalScreen.Ber
 		super.init();
 		Runnable reSort = () -> reSort(sortWidget.getCompareFunc(), reverseWidget.getEnabled());
 		sortWidget = addDrawableChild(new SortButtonWidget<>(anchorX() + LEFT_MARGIN, 0, BUTTON_WIDTH, BUTTON_HEIGHT, SORT_BUTTON_U, SORT_BUTTON_V, SORT_OPTIONS, reSort));
-		reverseWidget = addDrawableChild(new ToggleTexturedButtonWidget(anchorX() + LEFT_MARGIN, 0, BUTTON_WIDTH, BUTTON_HEIGHT, REVERSE_BUTTON_U, REVERSE_BUTTON_V, Text.literal("Reverse Sort"), reSort));
+		reverseWidget = addDrawableChild(new ToggleTexturedButtonWidget(anchorX() + LEFT_MARGIN, 0, BUTTON_WIDTH, BUTTON_HEIGHT, REVERSE_BUTTON_U, REVERSE_BUTTON_V, Text.translatable("limits_strawberries.gui.sort.reverse"), reSort));
 		reSort.run();
 
 		int rarity = Integer.MAX_VALUE;
@@ -67,6 +67,8 @@ public class BerryJournalScreen extends DataJournalScreen<BerryJournalScreen.Ber
 		leaderboardPosition = (int) StrawberryModClient.CLIENT_BERRIES.collectorInfo.values().stream().filter(s -> s.size() > berriesCollected).count() + 1;
 	}
 
+	private int unnamedBerryCounter = 1;
+
 	@Override
 	protected BerryEntry[] createEntries() {
 		ClientPlayerEntity player = MinecraftClient.getInstance().player;
@@ -74,12 +76,10 @@ public class BerryJournalScreen extends DataJournalScreen<BerryJournalScreen.Ber
 			return new BerryEntry[0];
 		return StrawberryModClient.CLIENT_BERRIES.berryInfo.values().stream().map(berry -> {
 			BerryEntry entry = new BerryEntry();
-			entry.name = berry.name;
-			entry.name = "Berry " + (int) Math.floor(Math.random() * 1000000);
-			entry.placer = "Command";
-			entry.desc = "This is a desc. It has many, many, many, many, many, many, many, many, many, many, many, many, many, many, many, many, many, many, many, many, lines.";
-			entry.clue = berry.clue;
-			entry.clue = "Bruh berries are covering the entire platform";
+			entry.name = berry.name == null ? I18n.translate("limits_strawberries.gui.unnamed_berry") + " " + unnamedBerryCounter++ : berry.name;
+			entry.placer = berry.placer == null ? I18n.translate("limits_strawberries.gui.command") : berry.placer;
+			entry.desc = berry.desc == null ? "" : berry.desc;
+			entry.clue = berry.clue == null ? I18n.translate("limits_strawberries.gui.no_clue") : berry.clue;
 			entry.collected = berry.collectors.contains(player.getUuid());
 			entry.collectedBy = berry.collectors.size();
 			return entry;
@@ -91,10 +91,10 @@ public class BerryJournalScreen extends DataJournalScreen<BerryJournalScreen.Ber
 	@Override
 	protected void renderPageZero(MatrixStack matrices, int mouseX, int mouseY, float delta) {
 		//Draw title
-		Text title = Text.literal("My Strawberries").setStyle(Style.EMPTY.withUnderline(true));
+		Text title = Text.translatable("limits_strawberries.gui.page_zero_title").setStyle(Style.EMPTY.withUnderline(true));
 		textRenderer.draw(matrices, title, anchorX() + SCREEN_WIDTH / 4 - textRenderer.getWidth(title) / 2, anchorY() + HEADER_SPACE, 0);
 
-		StringVisitable body1 = StringVisitable.plain("A place for you to track your berry progress and search for new ones!");
+		StringVisitable body1 = Text.translatable("limits_strawberries.gui.page_zero_body");
 		List<OrderedText> lines = textRenderer.wrapLines(body1, SCREEN_WIDTH / 2 - LEFT_MARGIN - RIGHT_MARGIN);
 		int x = anchorX() + LEFT_MARGIN;
 		int y = anchorY() + BODY_1_Y;
@@ -114,7 +114,7 @@ public class BerryJournalScreen extends DataJournalScreen<BerryJournalScreen.Ber
 
 	//Returns new y
 	private int renderSorting(MatrixStack matrices, int x, int y, int mouseX, int mouseY, float delta) {
-		Text options = Text.literal("Sorting Options: ");
+		Text options = Text.translatable("limits_strawberries.gui.page_zero_sort_options");
 		int optionWidth = textRenderer.getWidth(options);
 		int spacing = 5;
 		int textOffset = (BUTTON_HEIGHT - textRenderer.fontHeight) / 2;
@@ -140,7 +140,7 @@ public class BerryJournalScreen extends DataJournalScreen<BerryJournalScreen.Ber
 	//Return new y
 	private int renderStats(MatrixStack matrices, int y, int mouseX, int mouseY) {
 
-		Text stats = Text.literal("Stats: ");
+		Text stats = Text.translatable("limits_strawberries.gui.page_zero_stats");
 		int x = anchorX() + LEFT_MARGIN;
 		textRenderer.draw(matrices, stats, x, y, 0);
 		y += textRenderer.fontHeight + 4;
@@ -160,9 +160,9 @@ public class BerryJournalScreen extends DataJournalScreen<BerryJournalScreen.Ber
 
 		y += 6;
 		x = anchorX() + LEFT_MARGIN;
-		MutableText rarest = Text.literal("Rarest: ");
+		MutableText rarest = Text.translatable("limits_strawberries.gui.page_zero_rarest");
 		if (rarestBerry == null)
-			rarest.append(Text.literal("N/A").setStyle(Style.EMPTY.withColor(Formatting.GOLD)));
+			rarest.append(Text.translatable("limits_strawberries.gui.n_a").setStyle(Style.EMPTY.withColor(Formatting.GOLD)));
 		else
 			rarest.append(Text.literal(rarestBerry.name).setStyle(Style.EMPTY.withColor(Formatting.GOLD)));
 		textRenderer.draw(matrices, rarest, x, y, 0);
@@ -170,7 +170,7 @@ public class BerryJournalScreen extends DataJournalScreen<BerryJournalScreen.Ber
 
 		y += 6;
 		x = anchorX() + LEFT_MARGIN;
-		MutableText place = Text.literal("Leaderboard: ");
+		MutableText place = Text.translatable("limits_strawberries.gui.page_zero_leaderboard");
 		place.append(Text.literal("#" + leaderboardPosition).setStyle(Style.EMPTY.withColor(Formatting.GOLD)));
 		textRenderer.draw(matrices, place, x, y, 0);
 		y += textRenderer.fontHeight;
@@ -203,7 +203,7 @@ public class BerryJournalScreen extends DataJournalScreen<BerryJournalScreen.Ber
 
 		private boolean clueRevealed;
 
-		private static final int HORIZ_SPACING = 5;
+		private static final int HORIZ_SPACING = 2;
 		public static final int ICON_SIZE = 11;
 		private static final int TEXT_Y = (ENTRY_HEIGHT - LINE_SPACING) / 2;
 		private static final int TEXT_WIDTH = ENTRY_WIDTH - HORIZ_SPACING * 4 - ICON_SIZE * 2;
@@ -228,12 +228,12 @@ public class BerryJournalScreen extends DataJournalScreen<BerryJournalScreen.Ber
 				//Name text
 				cachedHoverText.add(Text.literal(name).setStyle(Style.EMPTY.withBold(true).withUnderline(false).withColor(Formatting.GOLD)).asOrderedText());
 				//Placed by
-				cachedHoverText.add(Text.literal("Placed by ").setStyle(Style.EMPTY.withColor(Formatting.BLUE)).append(Text.literal(placer).setStyle(Style.EMPTY.withColor(Formatting.AQUA))).asOrderedText());
+				cachedHoverText.add(Text.translatable("limits_strawberries.gui.berry_entry_placed_by").setStyle(Style.EMPTY.withColor(Formatting.BLUE)).append(Text.literal(placer).setStyle(Style.EMPTY.withColor(Formatting.AQUA))).asOrderedText());
 				//Description
-				cachedHoverText.addAll(textRenderer.wrapLines(StringVisitable.plain(desc), ENTRY_WIDTH));
+				cachedHoverText.addAll(textRenderer.wrapLines(Text.literal(desc), ENTRY_WIDTH));
 				//Num collected by
-				String playerCount = collectedBy + " Player" + (collectedBy == 1 ? "" : "s");
-				cachedHoverText.add(Text.literal("Collected by ").setStyle(Style.EMPTY.withColor(Formatting.BLUE)).append(Text.literal(playerCount).setStyle(Style.EMPTY.withColor(Formatting.AQUA))).asOrderedText());
+				MutableText playerCount = collectedBy == 1 ? Text.translatable("limits_strawberries.gui.berry_entry_player_count_singular") : Text.translatable("limits_strawberries.gui.berry_entry_player_count_plural", collectedBy);
+				cachedHoverText.add(Text.translatable("limits_strawberries.gui.berry_entry_collected_by").setStyle(Style.EMPTY.withColor(Formatting.BLUE)).append(playerCount.setStyle(Style.EMPTY.withColor(Formatting.AQUA))).asOrderedText());
 			}
 			return cachedHoverText;
 		}
@@ -241,11 +241,11 @@ public class BerryJournalScreen extends DataJournalScreen<BerryJournalScreen.Ber
 		private List<OrderedText> cachedClueText = null;
 		public List<OrderedText> getClueText() {
 			if (cachedClueText == null)
-				cachedClueText = textRenderer.wrapLines(StringVisitable.plain(clue), ENTRY_WIDTH);
+				cachedClueText = textRenderer.wrapLines(Text.literal(clue), ENTRY_WIDTH);
 			return cachedClueText;
 		}
 
-		private static final List<OrderedText> CLUE_HOVER = new ArrayList<>() {{add(Text.literal("Click for clue").asOrderedText());}};
+		private static final List<OrderedText> CLUE_HOVER = new ArrayList<>() {{add(Text.translatable("limits_strawberries.gui.berry_entry_click_for_clue").asOrderedText());}};
 
 		@Override
 		public List<OrderedText> render(MatrixStack matrices, int x, int y, int z, int mouseX, int mouseY, boolean mouseDown) {

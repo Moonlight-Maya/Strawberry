@@ -6,17 +6,15 @@ import net.minecraft.client.gui.widget.ButtonWidget;
 import net.minecraft.client.gui.widget.TexturedButtonWidget;
 import net.minecraft.client.render.GameRenderer;
 import net.minecraft.client.util.math.MatrixStack;
-import net.minecraft.text.OrderedText;
 import net.minecraft.text.Text;
 
 import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.List;
 
 public class SortButtonWidget<T> extends TexturedButtonWidget {
 
 	private int index = 0;
-	private ArrayList<SortOption<T>> options;
+	private final ArrayList<SortOption<T>> options;
 	private final Runnable onClick;
 	private final int baseU, baseV;
 

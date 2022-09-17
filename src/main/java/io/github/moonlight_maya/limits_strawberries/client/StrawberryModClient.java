@@ -2,7 +2,7 @@ package io.github.moonlight_maya.limits_strawberries.client;
 
 import com.mojang.blaze3d.platform.InputUtil;
 import io.github.moonlight_maya.limits_strawberries.StrawberryMod;
-import io.github.moonlight_maya.limits_strawberries.client.screens.MainJournalScreen;
+import io.github.moonlight_maya.limits_strawberries.client.screens.BerryJournalScreen;
 import io.github.moonlight_maya.limits_strawberries.data.BerryMap;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.fabricmc.fabric.api.client.rendering.v1.EntityModelLayerRegistry;
@@ -15,6 +15,8 @@ import org.quiltmc.loader.api.ModContainer;
 import org.quiltmc.qsl.base.api.entrypoint.client.ClientModInitializer;
 import org.quiltmc.qsl.lifecycle.api.client.event.ClientTickEvents;
 import org.quiltmc.qsl.networking.api.client.ClientPlayNetworking;
+
+import java.util.UUID;
 
 public class StrawberryModClient implements ClientModInitializer {
 
@@ -36,7 +38,7 @@ public class StrawberryModClient implements ClientModInitializer {
 		ClientTickEvents.END.register(client -> {
 			while (keyBinding.wasPressed())
 				if (client.currentScreen == null)
-					client.setScreen(new MainJournalScreen());
+					client.setScreen(new BerryJournalScreen());
 		});
 
 		EntityRendererRegistry.register(StrawberryMod.STRAWBERRY, StrawberryEntityRenderer::new);
@@ -44,25 +46,33 @@ public class StrawberryModClient implements ClientModInitializer {
 
 		CLIENT_BERRIES = new BerryMap();
 
-		ClientPlayNetworking.registerGlobalReceiver(StrawberryMod.ADD_PACKET_ID, (client, handler, buf, responseSender) -> {
+		ClientPlayNetworking.registerGlobalReceiver(StrawberryMod.S2C_ADD_PACKET_ID, (client, handler, buf, responseSender) -> {
 			CLIENT_BERRIES.addBerryIfNeeded(buf.readUuid());
 		});
-		ClientPlayNetworking.registerGlobalReceiver(StrawberryMod.DELETE_PACKET_ID, (client, handler, buf, responseSender) -> {
+		ClientPlayNetworking.registerGlobalReceiver(StrawberryMod.S2C_DELETE_PACKET_ID, (client, handler, buf, responseSender) -> {
 			CLIENT_BERRIES.deleteBerry(buf.readUuid());
 		});
-		ClientPlayNetworking.registerGlobalReceiver(StrawberryMod.NAME_PACKET_ID, (client, handler, buf, responseSender) -> {
-			CLIENT_BERRIES.updateName(buf.readUuid(), buf.readString());
+		ClientPlayNetworking.registerGlobalReceiver(StrawberryMod.S2C_RESET_PACKET_ID, (client, handler, buf, responseSender) -> {
+			CLIENT_BERRIES.resetPlayer(buf.readUuid());
 		});
-		ClientPlayNetworking.registerGlobalReceiver(StrawberryMod.CLUE_PACKET_ID, (client, handler, buf, responseSender) -> {
-			CLIENT_BERRIES.updateClue(buf.readUuid(), buf.readString());
+		ClientPlayNetworking.registerGlobalReceiver(StrawberryMod.S2C_UPDATE_PACKET_ID, (client, handler, buf, responseSender) -> {
+			UUID berryUUID = buf.readUuid();
+			byte flags = buf.readByte();
+			String name = null, clue = null, desc = null, placer = null;
+			if ((flags & 1) > 0)
+				name = buf.readString();
+			if ((flags & 2) > 0)
+				clue = buf.readString();
+			if ((flags & 4) > 0)
+				desc = buf.readString();
+			if ((flags & 8) > 0)
+				placer = buf.readString();
+			CLIENT_BERRIES.updateBerry(berryUUID, name, clue, desc, placer);
 		});
-		ClientPlayNetworking.registerGlobalReceiver(StrawberryMod.COLLECT_PACKET_ID, (client, handler, buf, responseSender) -> {
+		ClientPlayNetworking.registerGlobalReceiver(StrawberryMod.S2C_COLLECT_PACKET_ID, (client, handler, buf, responseSender) -> {
 			CLIENT_BERRIES.collect(buf.readUuid(), buf.readUuid());
 		});
-		ClientPlayNetworking.registerGlobalReceiver(StrawberryMod.ADD_PACKET_ID, (client, handler, buf, responseSender) -> {
-			CLIENT_BERRIES.addBerryIfNeeded(buf.readUuid());
-		});
-		ClientPlayNetworking.registerGlobalReceiver(StrawberryMod.SYNC_PACKET_ID, (client, handler, buf, responseSender) -> {
+		ClientPlayNetworking.registerGlobalReceiver(StrawberryMod.S2C_SYNC_PACKET_ID, (client, handler, buf, responseSender) -> {
 			CLIENT_BERRIES.loadFrom(buf.readNbt());
 		});
 
