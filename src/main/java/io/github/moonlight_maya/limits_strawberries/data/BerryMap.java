@@ -18,6 +18,7 @@ public class BerryMap {
 	public static final int CLUE_MAX = 100;
 	public static final int DESC_MAX = 500;
 	public static final int PLACER_MAX = 30;
+	public static final int GROUP_MAX = 30;
 
 	public void loadFrom(NbtCompound compound) {
 		berryInfo.clear();
@@ -31,7 +32,8 @@ public class BerryMap {
 					berryData.contains("name") ? berryData.getString("name") : null,
 					berryData.contains("clue") ? berryData.getString("clue") : null,
 					berryData.contains("desc") ? berryData.getString("desc") : null,
-					berryData.contains("placer") ? berryData.getString("placer") : null
+					berryData.contains("placer") ? berryData.getString("placer") : null,
+					berryData.contains("group") ? berryData.getString("group") : null
 			);
 			berryData.getList("collectors", NbtElement.INT_ARRAY_TYPE).stream().map(NbtHelper::toUuid).forEach(p -> collect(berryUUID, p));
 		}
@@ -43,6 +45,7 @@ public class BerryMap {
 
 	public final Map<UUID, Berry> berryInfo = new HashMap<>();
 	public final Map<UUID, Set<UUID>> collectorInfo = new HashMap<>(); //Map of player UUIDs to which berries they collected
+	public final Map<String, Set<UUID>> groups = new HashMap<>();
 	public final BiMap<String, UUID> virtualBerries = HashBiMap.create(); //Map of string ids in chat, to virtual berry UUIDs, and back
 
 	//Returns true if the added berry was new, and false if it was already in the map.
@@ -52,7 +55,17 @@ public class BerryMap {
 
 	//Returns true if the berry existed and was deleted successfully.
 	public boolean deleteBerry(UUID berryUUID) {
-		berryInfo.get(berryUUID).collectors.forEach(p -> collectorInfo.get(p).remove(berryUUID));
+		berryInfo.get(berryUUID).collectors.forEach(p -> {
+			collectorInfo.get(p).remove(berryUUID);
+			if (collectorInfo.get(p).isEmpty())
+				collectorInfo.remove(p);
+		});
+		String group = berryInfo.get(berryUUID).group;
+		if (group != null) {
+			groups.get(group).remove(berryUUID);
+			if (groups.get(group).isEmpty())
+				groups.remove(group);
+		}
 		return berryInfo.remove(berryUUID) != null;
 	}
 
@@ -77,7 +90,7 @@ public class BerryMap {
 	//2 bit means clue changed,
 	//4 bit means desc changed,
 	//8 bit means placer changed.
-	public byte updateBerry(UUID berryUUID, @Nullable String name, @Nullable String clue, @Nullable String desc, @Nullable String placer) {
+	public byte updateBerry(UUID berryUUID, @Nullable String name, @Nullable String clue, @Nullable String desc, @Nullable String placer, @Nullable String group) {
 		addBerryIfNeeded(berryUUID);
 		Berry berry = berryInfo.get(berryUUID);
 		byte result = 0;
@@ -102,6 +115,17 @@ public class BerryMap {
 			berry.placer = placer;
 		}
 
+		if (group != null && !Objects.equals(berry.group, group)) {
+			result |= 16;
+			if (berry.group != null && groups.containsKey(berry.group)) {
+				groups.get(berry.group).remove(berryUUID);
+				if (groups.get(berry.group).isEmpty())
+					groups.remove(berry.group);
+			}
+			berry.group = group;
+			groups.computeIfAbsent(group, s -> new HashSet<>()).add(berryUUID);
+		}
+
 		return result;
 	}
 
@@ -114,6 +138,20 @@ public class BerryMap {
 
 	public boolean hasPlayerCollected(UUID berryUUID, UUID playerUUID) {
 		return collectorInfo.computeIfAbsent(playerUUID, p -> new HashSet<>()).contains(berryUUID);
+	}
+
+	public boolean hasPlayerCompleted(String group, UUID playerUUID) {
+		if (group == null)
+			return false;
+		if (!groups.containsKey(group))
+			return true;
+		if (!collectorInfo.containsKey(playerUUID))
+			return false;
+		Set<UUID> collected = collectorInfo.get(playerUUID);
+		for (UUID berryUUID : groups.get(group))
+			if (!collected.contains(berryUUID))
+				return false;
+		return true;
 	}
 
 	public NbtCompound serialize() {
@@ -129,6 +167,8 @@ public class BerryMap {
 				berryData.putString("desc", entry.getValue().desc);
 			if (entry.getValue().placer != null)
 				berryData.putString("placer", entry.getValue().placer);
+			if (entry.getValue().group != null)
+				berryData.putString("group", entry.getValue().group);
 			NbtList collectors = new NbtList();
 			entry.getValue().collectors.stream().map(NbtHelper::fromUuid).forEach(collectors::add);
 			berryData.put("collectors", collectors);
@@ -145,7 +185,7 @@ public class BerryMap {
 	}
 
 	public static class Berry {
-		public String name, clue, desc, placer;
+		public String name, clue, desc, placer, group;
 		public final Set<UUID> collectors = new HashSet<>();
 	}
 

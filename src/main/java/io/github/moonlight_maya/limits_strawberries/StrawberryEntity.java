@@ -10,11 +10,14 @@ import net.minecraft.item.SwordItem;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.network.Packet;
 import net.minecraft.network.packet.s2c.play.EntitySpawnS2CPacket;
+import net.minecraft.network.packet.s2c.play.PlaySoundIdS2CPacket;
 import net.minecraft.server.network.ServerPlayerEntity;
+import net.minecraft.sound.SoundCategory;
 import net.minecraft.sound.SoundEvents;
 import net.minecraft.text.Text;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.Hand;
+import net.minecraft.util.Identifier;
 import net.minecraft.world.World;
 
 import javax.annotation.Nullable;
@@ -43,13 +46,18 @@ public class StrawberryEntity extends Entity {
 			if (!ticked) {
 				//Only attempt to add berry on first tick server side
 				StrawberryMod.SERVER_BERRIES.addBerryIfNeeded(getUuid());
-				StrawberryMod.SERVER_BERRIES.updateBerry(getUuid(), null, null, null, placerName);
+				StrawberryMod.SERVER_BERRIES.updateBerry(getUuid(), null, null, null, placerName, null);
 				ticked = true;
 			}
-			world.getOtherEntities(this, getBoundingBox(), e -> e instanceof ServerPlayerEntity).stream().map(e -> (ServerPlayerEntity) e).forEach(p -> {
-				boolean newBerry = StrawberryMod.SERVER_BERRIES.collect(getUuid(), p.getUuid());
+			world.getOtherEntities(this, getBoundingBox(), e -> e instanceof ServerPlayerEntity).stream().map(e -> (ServerPlayerEntity) e).forEach(player -> {
+				boolean newBerry = StrawberryMod.SERVER_BERRIES.collect(getUuid(), player.getUuid());
 				if (newBerry) {
-					p.sendMessage(Text.translatable("limits_strawberries.entity.berry_collect_notif"), true);
+					player.sendMessage(Text.translatable("limits_strawberries.entity.berry_collect_notif"), true);
+					boolean fullGroup = StrawberryMod.SERVER_BERRIES.hasPlayerCompleted(StrawberryMod.SERVER_BERRIES.berryInfo.get(getUuid()).group, player.getUuid());
+					Identifier soundToPlay = fullGroup ? StrawberryMod.GROUP_FINISH_SOUND_ID : StrawberryMod.COLLECT_SOUND_ID;
+					player.networkHandler.sendPacket(new PlaySoundIdS2CPacket(
+							soundToPlay, SoundCategory.NEUTRAL, player.getPos(), 1f, 1f, player.world.getRandom().nextLong()
+					));
 				}
 			});
 		}

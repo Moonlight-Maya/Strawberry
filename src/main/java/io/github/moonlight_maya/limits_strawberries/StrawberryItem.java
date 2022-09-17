@@ -8,6 +8,9 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.item.ItemUsage;
 import net.minecraft.item.ItemUsageContext;
 import net.minecraft.nbt.NbtCompound;
+import net.minecraft.network.packet.s2c.play.PlaySoundIdS2CPacket;
+import net.minecraft.server.network.ServerPlayerEntity;
+import net.minecraft.sound.SoundCategory;
 import net.minecraft.sound.SoundEvents;
 import net.minecraft.text.MutableText;
 import net.minecraft.text.Style;
@@ -90,6 +93,11 @@ public class StrawberryItem extends Item {
 					boolean newBerry = StrawberryMod.SERVER_BERRIES.collect(berryUUID, playerUUID);
 					if (newBerry) {
 						player.sendMessage(Text.translatable("limits_strawberries.entity.berry_collect_notif"), true);
+						boolean fullGroup = StrawberryMod.SERVER_BERRIES.hasPlayerCompleted(StrawberryMod.SERVER_BERRIES.berryInfo.get(berryUUID).group, playerUUID);
+						Identifier soundToPlay = fullGroup ? StrawberryMod.GROUP_FINISH_SOUND_ID : StrawberryMod.COLLECT_SOUND_ID;
+						((ServerPlayerEntity) player).networkHandler.sendPacket(new PlaySoundIdS2CPacket(
+								soundToPlay, SoundCategory.NEUTRAL, player.getPos(), 1f, 1f, player.world.getRandom().nextLong()
+						));
 					}
 				}
 			}

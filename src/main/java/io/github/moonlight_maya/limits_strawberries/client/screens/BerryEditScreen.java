@@ -22,10 +22,10 @@ public class BerryEditScreen extends Screen {
 		this.entity = entity;
 	}
 
-	private TextFieldWidget nameField, clueField, descField;
+	private TextFieldWidget nameField, groupField, clueField, descField;
 	private ButtonWidget doneButton, cancelButton;
 
-	private String prevName, prevClue, prevDesc;
+	private String prevName, prevGroup, prevClue, prevDesc;
 	private String placer;
 
 	@Override
@@ -40,11 +40,17 @@ public class BerryEditScreen extends Screen {
 		placer = StrawberryModClient.CLIENT_BERRIES.berryInfo.get(entity.getUuid()).placer;
 		if (placer == null) placer = "Command";
 
-		nameField = new TextFieldWidget(this.textRenderer, this.width / 2 - 150, 50, 300, 20, Text.translatable("limits_strawberries.gui.name"));
+		nameField = new TextFieldWidget(this.textRenderer, this.width / 2 - 150, 50, 140, 20, Text.translatable("limits_strawberries.gui.name"));
 		nameField.setMaxLength(BerryMap.NAME_MAX);
 		prevName = StrawberryModClient.CLIENT_BERRIES.berryInfo.get(entity.getUuid()).name;
 		if (prevName == null) prevName = "";
 		nameField.setText(prevName);
+
+		groupField = new TextFieldWidget(this.textRenderer, this.width / 2 + 10, 50, 140, 20, Text.translatable("limits_strawberries.gui.group"));
+		groupField.setMaxLength(BerryMap.GROUP_MAX);
+		prevGroup = StrawberryModClient.CLIENT_BERRIES.berryInfo.get(entity.getUuid()).group;
+		if (prevGroup == null) prevGroup = "";
+		groupField.setText(prevGroup);
 
 		clueField = new TextFieldWidget(this.textRenderer, this.width / 2 - 150, 100, 300, 20, Text.translatable("limits_strawberries.gui.clue"));
 		clueField.setMaxLength(BerryMap.CLUE_MAX);
@@ -59,6 +65,7 @@ public class BerryEditScreen extends Screen {
 		descField.setText(prevDesc);
 
 		addSelectableChild(nameField);
+		addSelectableChild(groupField);
 		addSelectableChild(clueField);
 		addSelectableChild(descField);
 		setInitialFocus(nameField);
@@ -68,10 +75,12 @@ public class BerryEditScreen extends Screen {
 	@Override
 	public void render(MatrixStack matrices, int mouseX, int mouseY, float delta) {
 		this.renderBackground(matrices);
-		drawCenteredText(matrices, this.textRenderer, Text.translatable("limits_strawberries.gui.edit_berry_title"), this.width / 2, 20, 16777215);
-		drawCenteredText(matrices, this.textRenderer, Text.translatable("limits_strawberries.gui.edit_berry_placed_by", placer), this.width / 2, 30, 16777215);
+		drawCenteredText(matrices, this.textRenderer, Text.translatable("limits_strawberries.gui.edit_berry_title"), this.width / 2, 10, 16777215);
+		drawCenteredText(matrices, this.textRenderer, Text.translatable("limits_strawberries.gui.edit_berry_placed_by", placer), this.width / 2, 20, 16777215);
 		drawTextWithShadow(matrices, this.textRenderer, Text.translatable("limits_strawberries.gui.name"), this.width / 2 - 150, 40, 10526880);
 		nameField.render(matrices, mouseX, mouseY, delta);
+		drawTextWithShadow(matrices, this.textRenderer, Text.translatable("limits_strawberries.gui.group"), this.width / 2 + 10, 40, 10526880);
+		groupField.render(matrices, mouseX, mouseY, delta);
 		drawTextWithShadow(matrices, this.textRenderer, Text.translatable("limits_strawberries.gui.clue"), this.width / 2 - 150, 90, 10526880);
 		clueField.render(matrices, mouseX, mouseY, delta);
 		drawTextWithShadow(matrices, this.textRenderer, Text.translatable("limits_strawberries.gui.desc"), this.width / 2 - 150, 140, 10526880);
@@ -85,6 +94,7 @@ public class BerryEditScreen extends Screen {
 		buf.writeInt(entity.getId());
 
 		boolean nameChange = !nameField.getText().equals(prevName);
+		boolean groupChange = !groupField.getText().equals(prevGroup);
 		boolean clueChange = !clueField.getText().equals(prevClue);
 		boolean descChange = !descField.getText().equals(prevDesc);
 
@@ -92,6 +102,7 @@ public class BerryEditScreen extends Screen {
 		flags |= nameChange ? 1 : 0;
 		flags |= clueChange ? 2 : 0;
 		flags |= descChange ? 4 : 0;
+		flags |= groupChange ? 16 : 0;
 		buf.writeByte(flags);
 		if (nameChange)
 			buf.writeString(nameField.getText(), BerryMap.NAME_MAX);
@@ -99,6 +110,8 @@ public class BerryEditScreen extends Screen {
 			buf.writeString(clueField.getText(), BerryMap.CLUE_MAX);
 		if (descChange)
 			buf.writeString(descField.getText(), BerryMap.DESC_MAX);
+		if (groupChange)
+			buf.writeString(groupField.getText(), BerryMap.GROUP_MAX);
 
 		ClientPlayNetworking.send(StrawberryMod.C2S_UPDATE_PACKET_ID, buf);
 		closeScreen();

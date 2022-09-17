@@ -1,9 +1,14 @@
 package io.github.moonlight_maya.limits_strawberries.client.screens;
 
+import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.widget.TexturedButtonWidget;
+import net.minecraft.client.sound.PositionedSoundInstance;
+import net.minecraft.client.sound.SoundManager;
 import net.minecraft.client.util.math.MatrixStack;
+import net.minecraft.sound.SoundEvents;
 import net.minecraft.text.OrderedText;
 import net.minecraft.text.Text;
+import org.lwjgl.glfw.GLFW;
 
 import java.util.*;
 
@@ -21,7 +26,7 @@ public abstract class DataJournalScreen<T extends DataJournalScreen.Entry> exten
 
 	public static final int PAGE_BUTTON_WIDTH = 22;
 	public static final int PAGE_BUTTON_HEIGHT = 11;
-	private static final int LEFT_BUTTON_X = 5;
+	private static final int LEFT_BUTTON_X = LEFT_MARGIN;
 	private static final int RIGHT_BUTTON_X = SCREEN_WIDTH - RIGHT_MARGIN - PAGE_BUTTON_WIDTH;
 	private static final int PAGE_BUTTON_Y = SCREEN_HEIGHT - 2 - PAGE_BUTTON_HEIGHT;
 	private static final int LEFT_BUTTON_U = SCREEN_WIDTH + MainJournalScreen.BUTTON_WIDTH + BerryJournalScreen.BerryEntry.ICON_SIZE;
@@ -60,8 +65,18 @@ public abstract class DataJournalScreen<T extends DataJournalScreen.Entry> exten
 		super.init();
 		//Constructor after studying:
 		//x, y, width, height, u, v, hoveredVOffset, texture, texWidth, texHeight, onClick
-		leftButton = addDrawableChild(new TexturedButtonWidget(anchorX() + LEFT_BUTTON_X, anchorY() + PAGE_BUTTON_Y, PAGE_BUTTON_WIDTH, PAGE_BUTTON_HEIGHT, LEFT_BUTTON_U, PAGE_BUTTON_V, PAGE_BUTTON_HEIGHT, TEXTURE, TEX_WIDTH, TEX_HEIGHT, button -> prevPage()));
-		rightButton = addDrawableChild(new TexturedButtonWidget(anchorX() + RIGHT_BUTTON_X, anchorY() + PAGE_BUTTON_Y, PAGE_BUTTON_WIDTH, PAGE_BUTTON_HEIGHT, RIGHT_BUTTON_U, PAGE_BUTTON_V, PAGE_BUTTON_HEIGHT, TEXTURE, TEX_WIDTH, TEX_HEIGHT, button -> nextPage()));
+		leftButton = addDrawableChild(new TexturedButtonWidget(anchorX() + LEFT_BUTTON_X, anchorY() + PAGE_BUTTON_Y, PAGE_BUTTON_WIDTH, PAGE_BUTTON_HEIGHT, LEFT_BUTTON_U, PAGE_BUTTON_V, PAGE_BUTTON_HEIGHT, TEXTURE, TEX_WIDTH, TEX_HEIGHT, button -> prevPage()) {
+			@Override
+			public void playDownSound(SoundManager soundManager) {
+				soundManager.play(PositionedSoundInstance.master(SoundEvents.ITEM_BOOK_PAGE_TURN, 1.0F));
+			}
+		});
+		rightButton = addDrawableChild(new TexturedButtonWidget(anchorX() + RIGHT_BUTTON_X, anchorY() + PAGE_BUTTON_Y, PAGE_BUTTON_WIDTH, PAGE_BUTTON_HEIGHT, RIGHT_BUTTON_U, PAGE_BUTTON_V, PAGE_BUTTON_HEIGHT, TEXTURE, TEX_WIDTH, TEX_HEIGHT, button -> nextPage()){
+			@Override
+			public void playDownSound(SoundManager soundManager) {
+				soundManager.play(PositionedSoundInstance.master(SoundEvents.ITEM_BOOK_PAGE_TURN, 1.0F));
+			}
+		});
 		leftButton.visible = currentPage > 0;
 		rightButton.visible = numPages - currentPage > 2;
 	}
@@ -80,6 +95,27 @@ public abstract class DataJournalScreen<T extends DataJournalScreen.Entry> exten
 		currentPage -= 2;
 		leftButton.visible = currentPage > 0;
 		rightButton.visible = numPages - currentPage > 2;
+	}
+
+	public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+		if (super.keyPressed(keyCode, scanCode, modifiers)) {
+			return true;
+		}
+		if (keyCode == GLFW.GLFW_KEY_LEFT) {
+			if (leftButton.visible) {
+				leftButton.playDownSound(MinecraftClient.getInstance().getSoundManager());
+				leftButton.onPress();
+			}
+			return true;
+		}
+		if (keyCode == GLFW.GLFW_KEY_RIGHT) {
+			if (rightButton.visible) {
+				rightButton.playDownSound(MinecraftClient.getInstance().getSoundManager());
+				rightButton.onPress();
+			}
+			return true;
+		}
+		return false;
 	}
 
 	protected void reSort(Comparator<T> sortFunction, boolean reverse) {

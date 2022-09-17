@@ -1,0 +1,14 @@
+{
+  "berry_collect": {
+    "subtitle": "subtitles.limits_strawberries.berry_collect",
+    "sounds": [
+      "limits_strawberries:berry_collect"
+    ]
+  },
+  "group_finish": {
+    "subtitle": "subtitles.limits_strawberries.group_finish",
+    "sounds": [
+      "limits_strawberries:group_finish"
+    ]
+  }
+}

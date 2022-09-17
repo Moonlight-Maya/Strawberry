@@ -135,7 +135,7 @@ public class BerryCommands {
 	}
 
 	private static int berryGrant(CommandContext<ServerCommandSource> context) throws CommandSyntaxException {
-		if (context.getSource().hasPermissionLevel(3)) {
+		if (context.getSource().hasPermissionLevel(2)) {
 			String key = StringArgumentType.getString(context, "key");
 			UUID berryUUID = StrawberryMod.SERVER_BERRIES.virtualBerries.get(key);
 			if (berryUUID == null) {
@@ -212,7 +212,7 @@ public class BerryCommands {
 					context.getSource().getEntity() == null || !(context.getSource().getEntity() instanceof PlayerEntity) ? "N/A" : context.getSource().getEntity().getEntityName(),
 					context.getSource().getEntity() == null || !(context.getSource().getEntity() instanceof PlayerEntity) ? "N/A" : context.getSource().getEntity().getUuid()
 			);
-			StrawberryMod.SERVER_BERRIES.updateBerry(berryUUID, name, null, null, null);
+			StrawberryMod.SERVER_BERRIES.updateBerry(berryUUID, name, null, null, null, null);
 			return 0;
 		}
 		return -1;
@@ -238,7 +238,7 @@ public class BerryCommands {
 					context.getSource().getEntity() == null || !(context.getSource().getEntity() instanceof PlayerEntity) ? "N/A" : context.getSource().getEntity().getEntityName(),
 					context.getSource().getEntity() == null || !(context.getSource().getEntity() instanceof PlayerEntity) ? "N/A" : context.getSource().getEntity().getUuid()
 			);
-			StrawberryMod.SERVER_BERRIES.updateBerry(berryUUID, null, clue, null, null);
+			StrawberryMod.SERVER_BERRIES.updateBerry(berryUUID, null, clue, null, null, null);
 			return 0;
 		}
 		return -1;
@@ -264,7 +264,7 @@ public class BerryCommands {
 					context.getSource().getEntity() == null || !(context.getSource().getEntity() instanceof PlayerEntity) ? "N/A" : context.getSource().getEntity().getEntityName(),
 					context.getSource().getEntity() == null || !(context.getSource().getEntity() instanceof PlayerEntity) ? "N/A" : context.getSource().getEntity().getUuid()
 			);
-			StrawberryMod.SERVER_BERRIES.updateBerry(berryUUID, null, null, desc, null);
+			StrawberryMod.SERVER_BERRIES.updateBerry(berryUUID, null, null, desc, null, null);
 			return 0;
 		}
 		return -1;
@@ -290,7 +290,33 @@ public class BerryCommands {
 					context.getSource().getEntity() == null || !(context.getSource().getEntity() instanceof PlayerEntity) ? "N/A" : context.getSource().getEntity().getEntityName(),
 					context.getSource().getEntity() == null || !(context.getSource().getEntity() instanceof PlayerEntity) ? "N/A" : context.getSource().getEntity().getUuid()
 			);
-			StrawberryMod.SERVER_BERRIES.updateBerry(berryUUID, null, null, null, placer);
+			StrawberryMod.SERVER_BERRIES.updateBerry(berryUUID, null, null, null, placer, null);
+			return 0;
+		}
+		return -1;
+	}
+
+	private static int berryUpdateGroup(CommandContext<ServerCommandSource> context) throws CommandSyntaxException {
+		if (context.getSource().hasPermissionLevel(2)) {
+			String key = StringArgumentType.getString(context, "key");
+			UUID berryUUID = StrawberryMod.SERVER_BERRIES.virtualBerries.get(key);
+			if (berryUUID == null) {
+				context.getSource().sendFeedback(Text.translatable("limits_strawberies.command.failure_invalid_key", key), false);
+				return -1;
+			}
+			String group = StringArgumentType.getString(context, "group");
+			if (group.length() > BerryMap.GROUP_MAX) {
+				context.getSource().sendFeedback(Text.translatable("limits_strawberies.command.failure_too_long", BerryMap.GROUP_MAX), false);
+				return -1;
+			}
+			StrawberryMod.LOGGER.info("Virtual berry with key {} and uuid {} had its group set to \"{}\" by player {} (UUID {})",
+					key,
+					StrawberryMod.SERVER_BERRIES.virtualBerries.get(key),
+					group,
+					context.getSource().getEntity() == null || !(context.getSource().getEntity() instanceof PlayerEntity) ? "N/A" : context.getSource().getEntity().getEntityName(),
+					context.getSource().getEntity() == null || !(context.getSource().getEntity() instanceof PlayerEntity) ? "N/A" : context.getSource().getEntity().getUuid()
+			);
+			StrawberryMod.SERVER_BERRIES.updateBerry(berryUUID, null, null, null, null, group);
 			return 0;
 		}
 		return -1;
@@ -330,7 +356,7 @@ public class BerryCommands {
 						.requires(source -> source.hasPermissionLevel(2))
 						.executes(BerryCommands::berryList)
 				).then(literal("grant")
-						.requires(source -> source.hasPermissionLevel(3))
+						.requires(source -> source.hasPermissionLevel(2))
 						.then(argument("targets", EntityArgumentType.players())
 								.then(argument("key", StringArgumentType.string())
 										.suggests(keySuggestor)
@@ -367,6 +393,11 @@ public class BerryCommands {
 								.then(literal("placer")
 										.then(argument("placer", StringArgumentType.greedyString())
 												.executes(BerryCommands::berryUpdatePlacer)
+										)
+								)
+								.then(literal("group")
+										.then(argument("group", StringArgumentType.greedyString())
+												.executes(BerryCommands::berryUpdateGroup)
 										)
 								)
 						)

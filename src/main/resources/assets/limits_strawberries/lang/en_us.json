@@ -1,6 +1,12 @@
 {
+  "subtitles.limits_strawberries.berry_collect": "Berry collects",
+  "subtitles.limits_strawberries.group_finish": "Berry collects triumphantly",
+  "category.limits_strawberries.journal": "Limits' Strawberries",
+  "key.limits_strawberries.journal": "Open Journal",
+
   "limits_strawberries.gui.edit_berry_title": "Edit Berry",
   "limits_strawberries.gui.name": "Name",
+  "limits_strawberries.gui.group": "Group",
   "limits_strawberries.gui.clue": "Clue",
   "limits_strawberries.gui.desc": "Description",
   "limits_strawberries.gui.edit_berry_placed_by": "Placed by %s",
@@ -9,11 +15,13 @@
   "limits_strawberries.gui.sort.name": "Name",
   "limits_strawberries.gui.sort.uncollected": "Uncollected",
   "limits_strawberries.gui.sort.most_collected": "Most Collected",
+  "limits_strawberries.gui.sort.group": "By Group",
   "limits_strawberries.gui.sort.reverse": "Reverse Sort",
 
   "limits_strawberries.gui.unnamed_berry": "Unnamed Berry",
   "limits_strawberries.gui.command": "Command",
   "limits_strawberries.gui.no_clue": "This berry has no clue!",
+  "limits_strawberries.gui.no_group": "None",
 
   "limits_strawberries.gui.page_zero_title": "My Strawberries",
   "limits_strawberries.gui.page_zero_body": "A place for you to track your berry progress and search for new ones!",
@@ -22,7 +30,9 @@
   "limits_strawberries.gui.page_zero_rarest": "Rarest: ",
   "limits_strawberries.gui.n_a": "N/A",
   "limits_strawberries.gui.page_zero_leaderboard": "Leaderboard: ",
+  "limits_strawberries.gui.page_zero_groups_completed": "Groups Completed: ",
   "limits_strawberries.gui.berry_entry_placed_by": "Placed by ",
+  "limits_strawberries.gui.berry_entry_group": "Group: ",
   "limits_strawberries.gui.berry_entry_collected_by": "Collected by ",
   "limits_strawberries.gui.berry_entry_player_count_singular": "1 Player",
   "limits_strawberries.gui.berry_entry_player_count_plural": "%d Players",

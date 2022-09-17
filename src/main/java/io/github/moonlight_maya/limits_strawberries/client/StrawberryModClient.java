@@ -58,7 +58,7 @@ public class StrawberryModClient implements ClientModInitializer {
 		ClientPlayNetworking.registerGlobalReceiver(StrawberryMod.S2C_UPDATE_PACKET_ID, (client, handler, buf, responseSender) -> {
 			UUID berryUUID = buf.readUuid();
 			byte flags = buf.readByte();
-			String name = null, clue = null, desc = null, placer = null;
+			String name = null, clue = null, desc = null, placer = null, group = null;
 			if ((flags & 1) > 0)
 				name = buf.readString();
 			if ((flags & 2) > 0)
@@ -67,7 +67,9 @@ public class StrawberryModClient implements ClientModInitializer {
 				desc = buf.readString();
 			if ((flags & 8) > 0)
 				placer = buf.readString();
-			CLIENT_BERRIES.updateBerry(berryUUID, name, clue, desc, placer);
+			if ((flags & 16) > 0)
+				group = buf.readString();
+			CLIENT_BERRIES.updateBerry(berryUUID, name, clue, desc, placer, group);
 		});
 		ClientPlayNetworking.registerGlobalReceiver(StrawberryMod.S2C_COLLECT_PACKET_ID, (client, handler, buf, responseSender) -> {
 			CLIENT_BERRIES.collect(buf.readUuid(), buf.readUuid());

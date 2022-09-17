@@ -9,6 +9,7 @@ import net.minecraft.entity.EntityType;
 import net.minecraft.entity.SpawnGroup;
 import net.minecraft.item.ItemGroup;
 import net.minecraft.nbt.NbtCompound;
+import net.minecraft.sound.SoundEvent;
 import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.registry.Registry;
@@ -37,6 +38,12 @@ public class StrawberryMod implements ModInitializer {
 	public static final Identifier PERSISTENT_STORAGE = new Identifier(MODID, "persistent");
 	public static final Logger LOGGER = LoggerFactory.getLogger(MODID);
 
+	public static final Identifier COLLECT_SOUND_ID = new Identifier(MODID, "berry_collect");
+	public static final SoundEvent COLLECT_SOUND = new SoundEvent(COLLECT_SOUND_ID);
+
+	public static final Identifier GROUP_FINISH_SOUND_ID = new Identifier(MODID, "group_finish");
+	public static final SoundEvent GROUP_FINISH_SOUND = new SoundEvent(GROUP_FINISH_SOUND_ID);
+
 	public static final EntityType<StrawberryEntity> STRAWBERRY = Registry.register(
 			Registry.ENTITY_TYPE,
 			new Identifier(MODID, "strawberry"),
@@ -48,6 +55,8 @@ public class StrawberryMod implements ModInitializer {
 	@Override
 	public void onInitialize(ModContainer mod) {
 		Registry.register(Registry.ITEM, new Identifier(MODID, "strawberry"), ITEM);
+		Registry.register(Registry.SOUND_EVENT, COLLECT_SOUND_ID, COLLECT_SOUND);
+		Registry.register(Registry.SOUND_EVENT, GROUP_FINISH_SOUND_ID, GROUP_FINISH_SOUND);
 
 		ServerPlayNetworking.registerGlobalReceiver(C2S_UPDATE_PACKET_ID, (server, player, handler, buf, responseSender) -> {
 			if (!player.isCreative()) {
@@ -58,22 +67,25 @@ public class StrawberryMod implements ModInitializer {
 			Entity entity = player.world.getEntityById(entityId);
 			if (entity instanceof StrawberryEntity strabby) {
 				byte flags = buf.readByte();
-				String name = null, clue = null, desc = null;
+				String name = null, clue = null, desc = null, group = null;
 				if ((flags & 1) > 0)
 					name = buf.readString(BerryMap.NAME_MAX);
 				if ((flags & 2) > 0)
 					clue = buf.readString(BerryMap.CLUE_MAX);
 				if ((flags & 4) > 0)
 					desc = buf.readString(BerryMap.DESC_MAX);
+				if ((flags & 16) > 0)
+					group = buf.readString(BerryMap.GROUP_MAX);
 
-				SERVER_BERRIES.updateBerry(strabby.getUuid(), name, clue, desc, null);
-				LOGGER.info("Update made to berry {}, by {} (UUID {}). Name = {}, Clue = {}, Desc = {}",
+				SERVER_BERRIES.updateBerry(strabby.getUuid(), name, clue, desc, null, group);
+				LOGGER.info("Update made to berry {}, by {} (UUID {}). Name = {}, Clue = {}, Desc = {}, Group = {}",
 						entity.getUuid().toString(),
 						player.getEntityName(),
 						player.getUuid().toString(),
 						name,
 						clue,
-						desc
+						desc,
+						group
 				);
 			}
 		});

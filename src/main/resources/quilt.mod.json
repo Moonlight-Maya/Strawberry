@@ -8,8 +8,9 @@
 			"name": "Limits' Strawberries",
 			"description": "Adds collectible strawberries from Celeste into the game!",
 			"contributors": {
-				"Limit System": "Authors",
-				"Aikoyori": "Item Art"
+				"Limit System": "Programming",
+				"Aikoyori": "Item Art, Sounds",
+				"Falkreon": "Book Texture"
 			},
 			"contact": {
 				"sources": "https://github.com/Moonlight-Maya/Strawberry"

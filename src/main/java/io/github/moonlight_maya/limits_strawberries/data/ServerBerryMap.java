@@ -45,8 +45,8 @@ public class ServerBerryMap extends BerryMap {
 	}
 
 	@Override
-	public byte updateBerry(UUID berryUUID, @Nullable String name, @Nullable String clue, @Nullable String desc, @Nullable String placer) {
-		byte flags = super.updateBerry(berryUUID, name, clue, desc, placer);
+	public byte updateBerry(UUID berryUUID, @Nullable String name, @Nullable String clue, @Nullable String desc, @Nullable String placer, @Nullable String group) {
+		byte flags = super.updateBerry(berryUUID, name, clue, desc, placer, group);
 		if (flags > 0) {
 			PacketByteBuf buf = PacketByteBufs.create();
 			buf.writeUuid(berryUUID);
@@ -60,6 +60,8 @@ public class ServerBerryMap extends BerryMap {
 				buf.writeString(desc);
 			if ((flags & 8) > 0)
 				buf.writeString(placer);
+			if ((flags & 16) > 0)
+				buf.writeString(group);
 			ServerPlayNetworking.send(PlayerLookup.all(server), StrawberryMod.S2C_UPDATE_PACKET_ID, buf);
 		}
 		return flags;

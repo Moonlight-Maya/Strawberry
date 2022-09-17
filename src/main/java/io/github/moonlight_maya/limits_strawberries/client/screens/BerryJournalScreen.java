@@ -1,6 +1,7 @@
 package io.github.moonlight_maya.limits_strawberries.client.screens;
 
 import com.mojang.blaze3d.systems.RenderSystem;
+import io.github.moonlight_maya.limits_strawberries.StrawberryMod;
 import io.github.moonlight_maya.limits_strawberries.client.StrawberryModClient;
 import io.github.moonlight_maya.limits_strawberries.client.widget.SortButtonWidget;
 import io.github.moonlight_maya.limits_strawberries.client.widget.ToggleTexturedButtonWidget;
@@ -16,6 +17,7 @@ import net.minecraft.util.Formatting;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.UUID;
 
 public class BerryJournalScreen extends DataJournalScreen<BerryJournalScreen.BerryEntry> {
 
@@ -27,6 +29,7 @@ public class BerryJournalScreen extends DataJournalScreen<BerryJournalScreen.Ber
 		add(new SortButtonWidget.SortOption<>(Comparator.comparing(entry -> entry.name), Text.translatable("limits_strawberries.gui.sort.name")));
 		add(new SortButtonWidget.SortOption<>(Comparator.comparing(entry -> entry.collected), Text.translatable("limits_strawberries.gui.sort.uncollected")));
 		add(new SortButtonWidget.SortOption<>(Comparator.comparing(entry -> -entry.collectedBy), Text.translatable("limits_strawberries.gui.sort.most_collected")));
+		add(new SortButtonWidget.SortOption<>((e1, e2) -> (e1.hasGroup != e2.hasGroup) ? (e1.hasGroup ? 1 : -1) : e1.group.compareTo(e2.group), Text.translatable("limits_strawberries.gui.sort.group")));
 	}};
 	private static final int BUTTON_WIDTH = 15;
 	private static final int BUTTON_HEIGHT = 15;
@@ -42,6 +45,7 @@ public class BerryJournalScreen extends DataJournalScreen<BerryJournalScreen.Ber
 	private int berriesCollected;
 	private int totalBerries;
 	private int leaderboardPosition;
+	private int groupsCompleted;
 	@Override
 	protected void init() {
 		super.init();
@@ -62,6 +66,9 @@ public class BerryJournalScreen extends DataJournalScreen<BerryJournalScreen.Ber
 			}
 		}
 		leaderboardPosition = (int) StrawberryModClient.CLIENT_BERRIES.collectorInfo.values().stream().filter(s -> s.size() > berriesCollected).count() + 1;
+		UUID playerUUID = MinecraftClient.getInstance().player != null ? MinecraftClient.getInstance().player.getUuid() : null;
+		if (playerUUID != null)
+			groupsCompleted = (int) StrawberryModClient.CLIENT_BERRIES.groups.keySet().stream().filter(g -> StrawberryModClient.CLIENT_BERRIES.hasPlayerCompleted(g, playerUUID)).count();
 	}
 
 	private int unnamedBerryCounter = 1;
@@ -77,6 +84,8 @@ public class BerryJournalScreen extends DataJournalScreen<BerryJournalScreen.Ber
 			entry.placer = berry.placer == null ? I18n.translate("limits_strawberries.gui.command") : berry.placer;
 			entry.desc = berry.desc == null ? "" : berry.desc;
 			entry.clue = berry.clue == null ? I18n.translate("limits_strawberries.gui.no_clue") : berry.clue;
+			entry.group = berry.group == null ? I18n.translate("limits_strawberries.gui.no_group") : berry.group;
+			entry.hasGroup = berry.group != null;
 			entry.collected = berry.collectors.contains(player.getUuid());
 			entry.collectedBy = berry.collectors.size();
 			return entry;
@@ -162,15 +171,31 @@ public class BerryJournalScreen extends DataJournalScreen<BerryJournalScreen.Ber
 			rarest.append(Text.translatable("limits_strawberries.gui.n_a").setStyle(Style.EMPTY.withColor(Formatting.GOLD)));
 		else
 			rarest.append(Text.literal(rarestBerry.name).setStyle(Style.EMPTY.withColor(Formatting.GOLD)));
-		textRenderer.draw(matrices, rarest, x, y, 0);
-		y += textRenderer.fontHeight;
+		List<OrderedText> rarestWrapped = textRenderer.wrapLines(rarest, SCREEN_WIDTH / 2 - LEFT_MARGIN - RIGHT_MARGIN);
+		for (OrderedText text : rarestWrapped) {
+			textRenderer.draw(matrices, text, x, y, 0);
+			y += textRenderer.fontHeight;
+		}
 
 		y += 6;
 		x = anchorX() + LEFT_MARGIN;
 		MutableText place = Text.translatable("limits_strawberries.gui.page_zero_leaderboard");
 		place.append(Text.literal("#" + leaderboardPosition).setStyle(Style.EMPTY.withColor(Formatting.GOLD)));
-		textRenderer.draw(matrices, place, x, y, 0);
-		y += textRenderer.fontHeight;
+		List<OrderedText> placeWrapped = textRenderer.wrapLines(place, SCREEN_WIDTH / 2 - LEFT_MARGIN - RIGHT_MARGIN);
+		for (OrderedText text : placeWrapped) {
+			textRenderer.draw(matrices, text, x, y, 0);
+			y += textRenderer.fontHeight;
+		}
+
+		y += 6;
+		x = anchorX() + LEFT_MARGIN;
+		MutableText groups = Text.translatable("limits_strawberries.gui.page_zero_groups_completed");
+		groups.append(Text.literal("" + groupsCompleted).setStyle(Style.EMPTY.withColor(Formatting.GOLD)));
+		List<OrderedText> groupsWrapped = textRenderer.wrapLines(groups, SCREEN_WIDTH / 2 - LEFT_MARGIN - RIGHT_MARGIN);
+		for (OrderedText text : groupsWrapped) {
+			textRenderer.draw(matrices, text, x, y, 0);
+			y += textRenderer.fontHeight;
+		}
 
 		return y + 5;
 	}
@@ -191,11 +216,10 @@ public class BerryJournalScreen extends DataJournalScreen<BerryJournalScreen.Ber
 		}
 	}
 
-
-
 	public class BerryEntry implements Entry {
 		private boolean collected;
-		private String name, clue, desc, placer;
+		private String name, clue, desc, placer, group;
+		private boolean hasGroup;
 		private int collectedBy;
 
 		private boolean clueRevealed;
@@ -224,6 +248,8 @@ public class BerryJournalScreen extends DataJournalScreen<BerryJournalScreen.Ber
 				cachedHoverText = new ArrayList<>();
 				//Name text
 				cachedHoverText.add(Text.literal(name).setStyle(Style.EMPTY.withBold(true).withUnderline(false).withColor(Formatting.GOLD)).asOrderedText());
+				//Group text
+				cachedHoverText.add(Text.translatable("limits_strawberries.gui.berry_entry_group").setStyle(Style.EMPTY.withColor(Formatting.BLUE)).append(Text.literal(group).setStyle(Style.EMPTY.withColor(Formatting.AQUA))).asOrderedText());
 				//Placed by
 				cachedHoverText.add(Text.translatable("limits_strawberries.gui.berry_entry_placed_by").setStyle(Style.EMPTY.withColor(Formatting.BLUE)).append(Text.literal(placer).setStyle(Style.EMPTY.withColor(Formatting.AQUA))).asOrderedText());
 				//Description
