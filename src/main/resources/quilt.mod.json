@@ -15,6 +15,7 @@
 			"contact": {
 				"sources": "https://github.com/Moonlight-Maya/Strawberry"
 			},
+			"license": "MIT",
 			"icon": "assets/limits_strawberries/icon.png"
 		},
 		"intermediate_mappings": "net.fabricmc:intermediary",
