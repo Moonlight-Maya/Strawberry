@@ -2,6 +2,7 @@ package io.github.moonlight_maya.limits_strawberries.data;
 
 import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
+import io.github.moonlight_maya.limits_strawberries.StrawberryMod;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.nbt.NbtElement;
 import net.minecraft.nbt.NbtHelper;
@@ -91,7 +92,8 @@ public class BerryMap {
 	//4 bit means desc changed,
 	//8 bit means placer changed.
 	public byte updateBerry(UUID berryUUID, @Nullable String name, @Nullable String clue, @Nullable String desc, @Nullable String placer, @Nullable String group) {
-		addBerryIfNeeded(berryUUID);
+		if (!berryInfo.containsKey(berryUUID))
+			return 0;
 		Berry berry = berryInfo.get(berryUUID);
 		byte result = 0;
 
@@ -129,9 +131,11 @@ public class BerryMap {
 		return result;
 	}
 
-	//Returns true if the berry wasn't already collected by that player, false otherwise.
+	//Returns true if the berry wasn't already collected by that player.
+	//Returns false if the berry uuid given does not exist.
 	public boolean collect(UUID berryUUID, UUID playerUUID) {
-		addBerryIfNeeded(berryUUID);
+		if (!berryInfo.containsKey(berryUUID))
+			return false;
 		collectorInfo.computeIfAbsent(playerUUID, p -> new HashSet<>()).add(berryUUID);
 		return berryInfo.get(berryUUID).collectors.add(playerUUID);
 	}

@@ -41,7 +41,7 @@ public class StrawberryItem extends Item {
 	@Override
 	public ActionResult useOnBlock(ItemUsageContext context) {
 		PlayerEntity player = context.getPlayer();
-		if (player != null && !player.getAbilities().allowModifyWorld)
+		if (player == null || !player.isCreative())
 			return ActionResult.PASS;
 
 		World world = context.getWorld();
@@ -62,8 +62,8 @@ public class StrawberryItem extends Item {
 				entity.emitGameEvent(GameEvent.ENTITY_PLACE, context.getPlayer());
 				entity.playSound(SoundEvents.BLOCK_HONEY_BLOCK_BREAK);
 
-				String playerName = player == null ? "Unknown Player" : player.getEntityName();
-				String playerUUID = player == null ? "N/A" : player.getUuid().toString();
+				String playerName = player.getEntityName();
+				String playerUUID = player.getUuid().toString();
 				StrawberryMod.LOGGER.info("Berry {} was placed at ({}, {}, {}) by player {} (UUID {}).",
 						entity.getUuid(),
 						snappedToGrid.x,
