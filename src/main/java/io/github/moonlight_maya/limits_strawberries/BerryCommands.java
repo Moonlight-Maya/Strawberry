@@ -1,6 +1,5 @@
 package io.github.moonlight_maya.limits_strawberries;
 
-import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
@@ -21,10 +20,7 @@ import net.minecraft.sound.SoundEvents;
 import net.minecraft.text.Text;
 import org.quiltmc.qsl.command.api.CommandRegistrationCallback;
 
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 
 import static net.minecraft.server.command.CommandManager.argument;
@@ -32,31 +28,16 @@ import static net.minecraft.server.command.CommandManager.literal;
 
 public class BerryCommands {
 
-	private static final HashMap<UUID, Integer> resetRequesters = new HashMap<>();
-
-	private static int berryResetRequest(CommandContext<ServerCommandSource> context) throws CommandSyntaxException {
-		ServerPlayerEntity player = context.getSource().getPlayer();
-		int code = (int) (Math.random() * 1000);
-		resetRequesters.put(player.getUuid(), code);
-		context.getSource().sendFeedback(Text.translatable("limits_strawberries.command.reset_confirmation", code), false);
-		return 0;
-	}
-
-	private static int berryResetConfirm(CommandContext<ServerCommandSource> context) throws CommandSyntaxException {
-		ServerPlayerEntity player = context.getSource().getPlayer();
-		int submittedCode = IntegerArgumentType.getInteger(context, "code");
-		Integer requiredCode = resetRequesters.remove(player.getUuid());
-		if (requiredCode == null) {
-			context.getSource().sendFeedback(Text.translatable("limits_strawberries.command.reset_confirm_before_request"), false);
-			return -1;
-		} else if (requiredCode != submittedCode) {
-			context.getSource().sendFeedback(Text.translatable("limits_strawberries.command.reset_canceled"), false);
-			return 0;
-		} else {
-			StrawberryMod.SERVER_BERRIES.resetPlayer(player.getUuid());
-			context.getSource().sendFeedback(Text.translatable("limits_strawberries.command.reset_confirmed"), false);
-			return 0;
-		}
+	private static int berryReset(CommandContext<ServerCommandSource> context, ServerPlayerEntity player) {
+			if (!lastCommands.getOrDefault(player.getUuid(), "").equalsIgnoreCase("berry reset")) {
+				context.getSource().sendFeedback(Text.translatable("limits_strawberries.command.reset_warning"), false);
+				context.getSource().sendFeedback(Text.translatable("limits_strawberries.command.confirm_prompt", Text.translatable("limits_strawberries.command.reset_command")), false);
+				return -1;
+			} else {
+				StrawberryMod.SERVER_BERRIES.resetPlayer(player.getUuid());
+				context.getSource().sendFeedback(Text.translatable("limits_strawberries.command.reset_confirmed"), false);
+				return 0;
+			}
 	}
 
 	private static int berryResetPlayers(CommandContext<ServerCommandSource> context) throws CommandSyntaxException {
@@ -73,7 +54,7 @@ public class BerryCommands {
 			Text feedback = StrawberryMod.SERVER_BERRIES.createVirtualBerry(key);
 			boolean success = feedback == null;
 			if (success) {
-				feedback = Text.translatable("limits_strawberies.command.berry_create_success", key);
+				feedback = Text.translatable("limits_strawberries.command.berry_create_success", key);
 				StrawberryMod.LOGGER.info("Virtual berry with key {} and uuid {} created by player {} (UUID {}).",
 						key,
 						StrawberryMod.SERVER_BERRIES.virtualBerries.get(key),
@@ -92,7 +73,7 @@ public class BerryCommands {
 			String key = StringArgumentType.getString(context, "key");
 			UUID berryUUID = StrawberryMod.SERVER_BERRIES.virtualBerries.get(key);
 			if (berryUUID == null) {
-				context.getSource().sendFeedback(Text.translatable("limits_strawberies.command.failure_invalid_key", key), false);
+				context.getSource().sendFeedback(Text.translatable("limits_strawberries.command.failure_invalid_key", key), false);
 				return -1;
 			}
 			boolean success = StrawberryMod.SERVER_BERRIES.deleteBerry(berryUUID);
@@ -103,10 +84,10 @@ public class BerryCommands {
 						context.getSource().getEntity() == null || !(context.getSource().getEntity() instanceof PlayerEntity) ? "N/A" : context.getSource().getEntity().getEntityName(),
 						context.getSource().getEntity() == null || !(context.getSource().getEntity() instanceof PlayerEntity) ? "N/A" : context.getSource().getEntity().getUuid()
 				);
-				context.getSource().sendFeedback(Text.translatable("limits_strawberies.command.berry_delete_success", key), false);
+				context.getSource().sendFeedback(Text.translatable("limits_strawberries.command.berry_delete_success", key), false);
 				return 0;
 			}
-			context.getSource().sendFeedback(Text.translatable("limits_strawberies.command.berry_delete_failure_not_exist", key), false);
+			context.getSource().sendFeedback(Text.translatable("limits_strawberries.command.berry_delete_failure_not_exist", key), false);
 			return -1;
 		}
 		return -1;
@@ -117,7 +98,7 @@ public class BerryCommands {
 			Text result;
 			Set<String> keys = StrawberryMod.SERVER_BERRIES.virtualBerries.keySet();
 			if (keys.isEmpty()) {
-				result = Text.translatable("limits_strawberies.command.berry_list_none");
+				result = Text.translatable("limits_strawberries.command.berry_list_none");
 			} else {
 				StringBuilder builder = new StringBuilder();
 				for (String key : keys) {
@@ -126,7 +107,7 @@ public class BerryCommands {
 					builder.append("\", ");
 				}
 				builder.delete(builder.length() - 2, builder.length()); //remove trailing comma and space
-				result = Text.translatable("limits_strawberies.command.berry_list_result", builder.toString());
+				result = Text.translatable("limits_strawberries.command.berry_list_result", builder.toString());
 			}
 			context.getSource().sendFeedback(result, false);
 			return 0;
@@ -139,12 +120,12 @@ public class BerryCommands {
 			String key = StringArgumentType.getString(context, "key");
 			UUID berryUUID = StrawberryMod.SERVER_BERRIES.virtualBerries.get(key);
 			if (berryUUID == null) {
-				context.getSource().sendFeedback(Text.translatable("limits_strawberies.command.failure_invalid_key", key), false);
+				context.getSource().sendFeedback(Text.translatable("limits_strawberries.command.failure_invalid_key", key), false);
 				return -1;
 			}
 			Collection<ServerPlayerEntity> targets = EntityArgumentType.getPlayers(context, "targets");
 			int num = (int) targets.stream().filter(playerEntity -> StrawberryMod.SERVER_BERRIES.collect(berryUUID, playerEntity.getUuid())).count();
-			context.getSource().sendFeedback(Text.translatable("limits_strawberies.command.berry_grant_success", num), false);
+			context.getSource().sendFeedback(Text.translatable("limits_strawberries.command.berry_grant_success", num), false);
 			return 0;
 		}
 		return -1;
@@ -155,7 +136,7 @@ public class BerryCommands {
 			String key = StringArgumentType.getString(context, "key");
 			UUID berryUUID = StrawberryMod.SERVER_BERRIES.virtualBerries.get(key);
 			if (berryUUID == null) {
-				context.getSource().sendFeedback(Text.translatable("limits_strawberies.command.failure_invalid_key", key), false);
+				context.getSource().sendFeedback(Text.translatable("limits_strawberries.command.failure_invalid_key", key), false);
 				return -1;
 			}
 			Collection<ServerPlayerEntity> targets = EntityArgumentType.getPlayers(context, "targets");
@@ -197,12 +178,12 @@ public class BerryCommands {
 			String key = StringArgumentType.getString(context, "key");
 			UUID berryUUID = StrawberryMod.SERVER_BERRIES.virtualBerries.get(key);
 			if (berryUUID == null) {
-				context.getSource().sendFeedback(Text.translatable("limits_strawberies.command.failure_invalid_key", key), false);
+				context.getSource().sendFeedback(Text.translatable("limits_strawberries.command.failure_invalid_key", key), false);
 				return -1;
 			}
 			String name = StringArgumentType.getString(context, "name");
 			if (name.length() > BerryMap.NAME_MAX) {
-				context.getSource().sendFeedback(Text.translatable("limits_strawberies.command.failure_too_long", BerryMap.NAME_MAX), false);
+				context.getSource().sendFeedback(Text.translatable("limits_strawberries.command.failure_too_long", BerryMap.NAME_MAX), false);
 				return -1;
 			}
 			StrawberryMod.LOGGER.info("Virtual berry with key {} and uuid {} had its name set to \"{}\" by player {} (UUID {})",
@@ -223,12 +204,12 @@ public class BerryCommands {
 			String key = StringArgumentType.getString(context, "key");
 			UUID berryUUID = StrawberryMod.SERVER_BERRIES.virtualBerries.get(key);
 			if (berryUUID == null) {
-				context.getSource().sendFeedback(Text.translatable("limits_strawberies.command.failure_invalid_key", key), false);
+				context.getSource().sendFeedback(Text.translatable("limits_strawberries.command.failure_invalid_key", key), false);
 				return -1;
 			}
 			String clue = StringArgumentType.getString(context, "clue");
 			if (clue.length() > BerryMap.CLUE_MAX) {
-				context.getSource().sendFeedback(Text.translatable("limits_strawberies.command.failure_too_long", BerryMap.CLUE_MAX), false);
+				context.getSource().sendFeedback(Text.translatable("limits_strawberries.command.failure_too_long", BerryMap.CLUE_MAX), false);
 				return -1;
 			}
 			StrawberryMod.LOGGER.info("Virtual berry with key {} and uuid {} had its clue set to \"{}\" by player {} (UUID {})",
@@ -249,12 +230,12 @@ public class BerryCommands {
 			String key = StringArgumentType.getString(context, "key");
 			UUID berryUUID = StrawberryMod.SERVER_BERRIES.virtualBerries.get(key);
 			if (berryUUID == null) {
-				context.getSource().sendFeedback(Text.translatable("limits_strawberies.command.failure_invalid_key", key), false);
+				context.getSource().sendFeedback(Text.translatable("limits_strawberries.command.failure_invalid_key", key), false);
 				return -1;
 			}
 			String desc = StringArgumentType.getString(context, "desc");
 			if (desc.length() > BerryMap.DESC_MAX) {
-				context.getSource().sendFeedback(Text.translatable("limits_strawberies.command.failure_too_long", BerryMap.DESC_MAX), false);
+				context.getSource().sendFeedback(Text.translatable("limits_strawberries.command.failure_too_long", BerryMap.DESC_MAX), false);
 				return -1;
 			}
 			StrawberryMod.LOGGER.info("Virtual berry with key {} and uuid {} had its description set to \"{}\" by player {} (UUID {})",
@@ -275,12 +256,12 @@ public class BerryCommands {
 			String key = StringArgumentType.getString(context, "key");
 			UUID berryUUID = StrawberryMod.SERVER_BERRIES.virtualBerries.get(key);
 			if (berryUUID == null) {
-				context.getSource().sendFeedback(Text.translatable("limits_strawberies.command.failure_invalid_key", key), false);
+				context.getSource().sendFeedback(Text.translatable("limits_strawberries.command.failure_invalid_key", key), false);
 				return -1;
 			}
 			String placer = StringArgumentType.getString(context, "placer");
 			if (placer.length() > BerryMap.PLACER_MAX) {
-				context.getSource().sendFeedback(Text.translatable("limits_strawberies.command.failure_too_long", BerryMap.PLACER_MAX), false);
+				context.getSource().sendFeedback(Text.translatable("limits_strawberries.command.failure_too_long", BerryMap.PLACER_MAX), false);
 				return -1;
 			}
 			StrawberryMod.LOGGER.info("Virtual berry with key {} and uuid {} had its placer set to \"{}\" by player {} (UUID {})",
@@ -301,12 +282,12 @@ public class BerryCommands {
 			String key = StringArgumentType.getString(context, "key");
 			UUID berryUUID = StrawberryMod.SERVER_BERRIES.virtualBerries.get(key);
 			if (berryUUID == null) {
-				context.getSource().sendFeedback(Text.translatable("limits_strawberies.command.failure_invalid_key", key), false);
+				context.getSource().sendFeedback(Text.translatable("limits_strawberries.command.failure_invalid_key", key), false);
 				return -1;
 			}
 			String group = StringArgumentType.getString(context, "group");
 			if (group.length() > BerryMap.GROUP_MAX) {
-				context.getSource().sendFeedback(Text.translatable("limits_strawberies.command.failure_too_long", BerryMap.GROUP_MAX), false);
+				context.getSource().sendFeedback(Text.translatable("limits_strawberries.command.failure_too_long", BerryMap.GROUP_MAX), false);
 				return -1;
 			}
 			StrawberryMod.LOGGER.info("Virtual berry with key {} and uuid {} had its group set to \"{}\" by player {} (UUID {})",
@@ -323,34 +304,29 @@ public class BerryCommands {
 	}
 
 	public static void init() {
-		BerryKeyInstructionProvider keySuggestor = new BerryKeyInstructionProvider();
+		BerryKeyInstructionProvider keySuggester = new BerryKeyInstructionProvider();
 
 		LiteralArgumentBuilder<ServerCommandSource> root = literal("berry")
 				.then(literal("reset")
-						.executes(BerryCommands::berryResetRequest)
-						.then(literal("confirm")
-								.then(argument("code", IntegerArgumentType.integer())
-										.executes(BerryCommands::berryResetConfirm)
-								)
-						)
+						.executes((c) -> unwrapAndExecute(c, BerryCommands::berryReset))
 						.then(literal("players")
 								.requires(source -> source.hasPermissionLevel(3))
 								.then(argument("targets", EntityArgumentType.players())
-										.executes(BerryCommands::berryResetPlayers)
+										.executes((c) -> unwrapAndExecute(c, BerryCommands::berryResetPlayers))
 								)
 						)
 				)
 				.then(literal("create")
 						.requires(source -> source.hasPermissionLevel(2))
 						.then(argument("key", StringArgumentType.string())
-								.executes(BerryCommands::berryCreate)
+								.executes((c) -> unwrapAndExecute(c, BerryCommands::berryCreate))
 						)
 				)
 				.then(literal("delete")
 						.requires(source -> source.hasPermissionLevel(2))
 						.then(argument("key", StringArgumentType.string())
-								.suggests(keySuggestor)
-								.executes(BerryCommands::berryDelete)
+								.suggests(keySuggester)
+								.executes((c) -> unwrapAndExecute(c, BerryCommands::berryDelete))
 						)
 				).then(literal("list")
 						.requires(source -> source.hasPermissionLevel(2))
@@ -359,45 +335,45 @@ public class BerryCommands {
 						.requires(source -> source.hasPermissionLevel(2))
 						.then(argument("targets", EntityArgumentType.players())
 								.then(argument("key", StringArgumentType.string())
-										.suggests(keySuggestor)
-										.executes(BerryCommands::berryGrant)
+										.suggests(keySuggester)
+										.executes((c) -> unwrapAndExecute(c, BerryCommands::berryGrant))
 								)
 						)
 				).then(literal("give")
 						.requires(source -> source.hasPermissionLevel(2))
 						.then(argument("targets", EntityArgumentType.players())
 								.then(argument("key", StringArgumentType.string())
-										.suggests(keySuggestor)
-										.executes(BerryCommands::berryGive)
+										.suggests(keySuggester)
+										.executes((c) -> unwrapAndExecute(c, BerryCommands::berryGive))
 								)
 						)
 				).then(literal("update")
 						.requires(source -> source.hasPermissionLevel(2))
 						.then(argument("key", StringArgumentType.string())
-								.suggests(keySuggestor)
+								.suggests(keySuggester)
 								.then(literal("name")
 										.then(argument("name", StringArgumentType.greedyString())
-												.executes(BerryCommands::berryUpdateName)
+												.executes((c) -> unwrapAndExecute(c, BerryCommands::berryUpdateName))
 										)
 								)
 								.then(literal("clue")
 										.then(argument("clue", StringArgumentType.greedyString())
-												.executes(BerryCommands::berryUpdateClue)
+												.executes((c) -> unwrapAndExecute(c, BerryCommands::berryUpdateClue))
 										)
 								)
 								.then(literal("desc")
 										.then(argument("desc", StringArgumentType.greedyString())
-												.executes(BerryCommands::berryUpdateDesc)
+												.executes((c) -> unwrapAndExecute(c, BerryCommands::berryUpdateDesc))
 										)
 								)
 								.then(literal("placer")
 										.then(argument("placer", StringArgumentType.greedyString())
-												.executes(BerryCommands::berryUpdatePlacer)
+												.executes((c) -> unwrapAndExecute(c, BerryCommands::berryUpdatePlacer))
 										)
 								)
 								.then(literal("group")
 										.then(argument("group", StringArgumentType.greedyString())
-												.executes(BerryCommands::berryUpdateGroup)
+												.executes((c) -> unwrapAndExecute(c, BerryCommands::berryUpdateGroup))
 										)
 								)
 						)
@@ -408,11 +384,51 @@ public class BerryCommands {
 
 	private static class BerryKeyInstructionProvider implements SuggestionProvider<ServerCommandSource> {
 		@Override
-		public CompletableFuture<Suggestions> getSuggestions(CommandContext<ServerCommandSource> context, SuggestionsBuilder builder) throws CommandSyntaxException {
+		public CompletableFuture<Suggestions> getSuggestions(CommandContext<ServerCommandSource> context, SuggestionsBuilder builder) {
 			for (String key : StrawberryMod.SERVER_BERRIES.virtualBerries.keySet())
 				builder.suggest(key);
 			return builder.buildFuture();
 		}
+	}
+
+	@FunctionalInterface
+	public interface CommandBiFunction<T1, T2, R> {
+		R apply(T1 t1, T2 t2) throws CommandSyntaxException;
+	}
+
+	@FunctionalInterface
+	public interface CommandFunction<T1, R> {
+		R apply(T1 t1) throws CommandSyntaxException;
+	}
+
+	private static final Map<UUID, String> lastCommands = new HashMap<>();
+
+	private static int unwrapAndExecute(CommandContext<ServerCommandSource> context, CommandBiFunction<CommandContext<ServerCommandSource>, ServerPlayerEntity, Integer> executeFunction, boolean requirePlayer) throws CommandSyntaxException {
+		// This is a weird "unwrapping" function that helps both validate players and save previous commands.
+		// The pattern can be expanded to remove context from downstream methods entirely (it's messy though)
+
+		ServerPlayerEntity player = context.getSource().method_44023(); // GetPlayerOrNull (c'mon QM)
+
+		if (requirePlayer && player == null) {
+			context.getSource().sendFeedback(Text.translatable("limits_strawberries.command.failure_non_player"), false);
+			return 0;
+		}
+
+		int result = executeFunction.apply(context, player);
+
+		if (player != null) {
+			lastCommands.put(player.getUuid(), context.getInput()); // Save this command (for confirmations)
+		}
+
+		return result;
+	}
+
+	private static int unwrapAndExecute(CommandContext<ServerCommandSource> context, CommandBiFunction<CommandContext<ServerCommandSource>, ServerPlayerEntity, Integer> executeFunction) throws CommandSyntaxException  {
+		return unwrapAndExecute(context, executeFunction, true);
+	}
+
+	private static int unwrapAndExecute(CommandContext<ServerCommandSource> context, CommandFunction<CommandContext<ServerCommandSource>, Integer> executeFunction) throws CommandSyntaxException  {
+		return unwrapAndExecute(context, (c, p) -> executeFunction.apply(c), false);
 	}
 
 }

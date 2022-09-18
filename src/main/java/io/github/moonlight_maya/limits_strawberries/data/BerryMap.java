@@ -79,7 +79,7 @@ public class BerryMap {
 	//Returns null on success.
 	public Text createVirtualBerry(String key) {
 		if (virtualBerries.containsKey(key))
-			return Text.translatable("limits_strawberies.command.berry_create_already_exists", key);
+			return Text.translatable("limits_strawberries.command.berry_create_already_exists", key);
 		UUID berryUUID;
 		do berryUUID = UUID.randomUUID(); while (!addBerryIfNeeded(berryUUID));
 		virtualBerries.put(key, berryUUID);
