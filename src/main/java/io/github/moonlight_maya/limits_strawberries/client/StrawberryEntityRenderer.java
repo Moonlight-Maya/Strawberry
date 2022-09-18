@@ -23,6 +23,8 @@ public class StrawberryEntityRenderer extends EntityRenderer<StrawberryEntity> {
 
 	private final ModelPart root;
 
+	public static int CLIENT_TICKS = 0;
+
 	protected StrawberryEntityRenderer(EntityRendererFactory.Context context) {
 		super(context);
 		this.shadowRadius = 0.375f;
@@ -46,7 +48,7 @@ public class StrawberryEntityRenderer extends EntityRenderer<StrawberryEntity> {
 
 	@Override
 	public void render(StrawberryEntity entity, float yaw, float tickDelta, MatrixStack matrices, VertexConsumerProvider vertexConsumers, int light) {
-		float time = entity.world.getTime() + tickDelta;
+		float time = CLIENT_TICKS + tickDelta;
 		root.yaw = (time / 5) % 360;
 		root.pivotY = (float) (Math.sin(time * 2 * Math.PI / 40) * 1.5);
 

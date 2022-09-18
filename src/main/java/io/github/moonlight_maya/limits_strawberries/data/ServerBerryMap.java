@@ -10,6 +10,7 @@ import org.quiltmc.qsl.networking.api.PacketByteBufs;
 import org.quiltmc.qsl.networking.api.PlayerLookup;
 import org.quiltmc.qsl.networking.api.ServerPlayNetworking;
 
+import java.util.Iterator;
 import java.util.UUID;
 
 public class ServerBerryMap extends BerryMap {
@@ -76,6 +77,34 @@ public class ServerBerryMap extends BerryMap {
 	}
 
 	public void syncTo(ServerPlayerEntity player) {
-		ServerPlayNetworking.send(player, StrawberryMod.S2C_SYNC_PACKET_ID, PacketByteBufs.create().writeNbt(serialize()));
+		NbtCompound full = serialize();
+
+		NbtCompound data = full.getCompound("data");
+		NbtCompound virtual = full.getCompound("virtual");
+
+		Iterator<String> dataIter = data.getKeys().iterator();
+		Iterator<String> virtualIter = virtual.getKeys().iterator();
+		while (dataIter.hasNext() || virtualIter.hasNext()) {
+			//Each sub packet contains up to 500 berries and up to 500 virtual berry mappings.
+			NbtCompound packet = new NbtCompound();
+			NbtCompound packetData = new NbtCompound();
+			packet.put("data", packetData);
+			NbtCompound packetVirtual = new NbtCompound();
+			packet.put("virtual", packetVirtual);
+			int dataAdded = 0;
+			int virtualAdded = 0;
+			while (dataIter.hasNext() && dataAdded++ < 500) {
+				String key = dataIter.next();
+				packetData.put(key, data.get(key));
+			}
+			while (virtualIter.hasNext() && virtualAdded++ < 500) {
+				String key = virtualIter.next();
+				packetVirtual.put(key, virtual.get(key));
+			}
+			boolean complete = !(dataIter.hasNext() || virtualIter.hasNext());
+			PacketByteBuf buf = PacketByteBufs.create().writeNbt(packet);
+			buf.writeBoolean(complete);
+			ServerPlayNetworking.send(player, StrawberryMod.S2C_SYNC_PACKET_ID, buf);
+		}
 	}
 }
