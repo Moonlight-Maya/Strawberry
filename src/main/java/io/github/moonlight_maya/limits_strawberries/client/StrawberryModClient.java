@@ -1,15 +1,20 @@
 package io.github.moonlight_maya.limits_strawberries.client;
 
 import com.mojang.blaze3d.platform.InputUtil;
+import io.github.moonlight_maya.limits_strawberries.StrawberryEntity;
 import io.github.moonlight_maya.limits_strawberries.StrawberryMod;
+import io.github.moonlight_maya.limits_strawberries.client.screens.BerryEditScreen;
 import io.github.moonlight_maya.limits_strawberries.client.screens.BerryJournalScreen;
 import io.github.moonlight_maya.limits_strawberries.data.BerryMap;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.fabricmc.fabric.api.client.rendering.v1.EntityModelLayerRegistry;
 import net.fabricmc.fabric.api.client.rendering.v1.EntityRendererRegistry;
+import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.option.KeyBind;
 import net.minecraft.client.render.entity.model.EntityModelLayer;
+import net.minecraft.entity.Entity;
 import net.minecraft.util.Identifier;
+import net.minecraft.world.World;
 import org.lwjgl.glfw.GLFW;
 import org.quiltmc.loader.api.ModContainer;
 import org.quiltmc.qsl.base.api.entrypoint.client.ClientModInitializer;
@@ -76,6 +81,15 @@ public class StrawberryModClient implements ClientModInitializer {
 		});
 		ClientPlayNetworking.registerGlobalReceiver(StrawberryMod.S2C_SYNC_PACKET_ID, (client, handler, buf, responseSender) -> {
 			CLIENT_BERRIES.loadFrom(buf.readNbt());
+		});
+
+		ClientPlayNetworking.registerGlobalReceiver(StrawberryMod.S2C_EDIT_SCREEN_PACKET_ID, (client, handler, buf, responseSender) -> {
+			World world = MinecraftClient.getInstance().world;
+			if (world != null) {
+				Entity e = world.getEntityById(buf.readInt());
+				if (e instanceof StrawberryEntity s)
+					client.execute(() -> MinecraftClient.getInstance().setScreen(new BerryEditScreen(s)));
+			}
 		});
 
 	}

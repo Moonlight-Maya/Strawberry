@@ -9,6 +9,7 @@ import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.SwordItem;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.network.Packet;
+import net.minecraft.network.PacketByteBuf;
 import net.minecraft.network.packet.s2c.play.EntitySpawnS2CPacket;
 import net.minecraft.network.packet.s2c.play.PlaySoundIdS2CPacket;
 import net.minecraft.server.network.ServerPlayerEntity;
@@ -19,6 +20,8 @@ import net.minecraft.util.ActionResult;
 import net.minecraft.util.Hand;
 import net.minecraft.util.Identifier;
 import net.minecraft.world.World;
+import org.quiltmc.qsl.networking.api.PacketByteBufs;
+import org.quiltmc.qsl.networking.api.ServerPlayNetworking;
 
 import javax.annotation.Nullable;
 
@@ -67,8 +70,12 @@ public class StrawberryEntity extends Entity {
 	public ActionResult interact(PlayerEntity player, Hand hand) {
 		if (!player.isCreative() || !player.getStackInHand(hand).isOf(StrawberryMod.ITEM))
 			return super.interact(player, hand);
-		if (player.world.isClient)
-			MinecraftClient.getInstance().setScreen(new BerryEditScreen(this));
+		if (player instanceof ServerPlayerEntity serverPlayerEntity) {
+			PacketByteBuf buf = PacketByteBufs.create();
+			buf.writeInt(getId());
+			ServerPlayNetworking.send(serverPlayerEntity, StrawberryMod.S2C_EDIT_SCREEN_PACKET_ID, buf);
+		}
+
 		return ActionResult.success(player.world.isClient);
 	}
 

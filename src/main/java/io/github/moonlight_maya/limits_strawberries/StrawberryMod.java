@@ -32,6 +32,7 @@ public class StrawberryMod implements ModInitializer {
 	public static final Identifier S2C_SYNC_PACKET_ID = new Identifier(MODID, "s2c_sync");
 	public static final Identifier S2C_UPDATE_PACKET_ID = new Identifier(MODID, "s2c_update");
 	public static final Identifier S2C_RESET_PACKET_ID = new Identifier(MODID, "s2c_reset");
+	public static final Identifier S2C_EDIT_SCREEN_PACKET_ID = new Identifier(MODID, "s2c_edit_screen");
 
 	public static final Identifier C2S_UPDATE_PACKET_ID = new Identifier(MODID, "c2s_update");
 
