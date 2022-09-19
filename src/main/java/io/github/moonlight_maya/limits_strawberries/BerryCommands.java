@@ -36,7 +36,7 @@ public class BerryCommands {
 			} else {
 				StrawberryMod.SERVER_BERRIES.resetPlayer(player.getUuid());
 				context.getSource().sendFeedback(Text.translatable("limits_strawberries.command.reset_confirmed"), false);
-				return 0;
+				return RETURN_RESET_LAST_COMMAND;
 			}
 	}
 
@@ -402,6 +402,7 @@ public class BerryCommands {
 	}
 
 	private static final Map<UUID, String> lastCommands = new HashMap<>();
+	private static final int RETURN_RESET_LAST_COMMAND = -7;
 
 	private static int unwrapAndExecute(CommandContext<ServerCommandSource> context, CommandBiFunction<CommandContext<ServerCommandSource>, ServerPlayerEntity, Integer> executeFunction, boolean requirePlayer) throws CommandSyntaxException {
 		// This is a weird "unwrapping" function that helps both validate players and save previous commands.
@@ -417,7 +418,7 @@ public class BerryCommands {
 		int result = executeFunction.apply(context, player);
 
 		if (player != null) {
-			lastCommands.put(player.getUuid(), context.getInput()); // Save this command (for confirmations)
+			lastCommands.put(player.getUuid(), result == RETURN_RESET_LAST_COMMAND ? "" : context.getInput()); // Save this command (for confirmations)
 		}
 
 		return result;
